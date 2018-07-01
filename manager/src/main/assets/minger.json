@@ -1,0 +1,79 @@
+{
+  "deviceNames": ["minger-P50"],
+  "commands": [
+    {
+      "identifier": "CHANGE_COLOR",
+      "request": {
+        "service": "00007777-0000-1000-8000-00805f9b34fb",
+        "characteristic": "00008877-0000-1000-8000-00805f9b34fb",
+        "length": 20,
+        "payloads": [
+          {
+            "name": "PREFIX",
+            "start": 0,
+            "end": 7,
+            "type": "HEX",
+            "value": "01fe000053831000"
+          },
+          {
+            "name": "GREEN",
+            "start": 8,
+            "end": 8,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255,
+            "value": 255
+          },
+          {
+            "name": "BLUE",
+            "start": 9,
+            "end": 9,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255,
+            "value": 255
+          },
+          {
+            "name": "RED",
+            "start": 10,
+            "end": 10,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255,
+            "value": 255
+          },
+          {
+            "name": "UNKNOWN",
+            "start": 11,
+            "end": 12,
+            "type": "HEX",
+            "value": "0050"
+          },
+          {
+            "name": "LUMINOSITY_1",
+            "start": 13,
+            "end": 13,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255,
+            "value": 2
+          },
+          {
+            "name": "LUMINOSITY_2",
+            "start": 14,
+            "end": 14,
+            "type": "INTEGER",
+            "value": 2
+          },
+          {
+            "name": "SUFFIX",
+            "start": 15,
+            "end": 15,
+            "type": "HEX",
+            "value": "00"
+          }
+        ]
+      }
+    }
+  ]
+}
