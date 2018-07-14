@@ -30,6 +30,11 @@ public class MainActivity extends AppCompatActivity {
 
     private Device mDevice;
     private CompositeDisposable slideDisposable = new CompositeDisposable();
+    private int red;
+    private int green;
+    private int blue;
+    private int luminosity;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +56,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void permissionsGranted() {
         final Minger_P50 minger_p50 = new Minger_P50(this);
+        //final SimulatorBLE simulator = new SimulatorBLE(this);
         findViewById(R.id.connect).setOnClickListener(view -> minger_p50.connect()
-                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SingleObserver<Device>() {
                     @Override
@@ -75,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.disconnect).setOnClickListener(view ->
                 minger_p50.disconnect(mDevice)
+                        .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new CompletableObserver() {
                     @Override
@@ -98,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 int value = seekBar.getProgress();
-                minger_p50.changeColor(mDevice, value, 0, 0)
+                minger_p50.apply(mDevice, value, green, blue, luminosity)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<String>() {
@@ -120,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onComplete() {
-
+                                red = value;
                             }
                         });
             }
@@ -140,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 int value = seekBar.getProgress();
-                minger_p50.changeColor(mDevice, 0, value, 0)
+                minger_p50.apply(mDevice, red, value, blue, luminosity)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<String>() {
                             @Override
@@ -161,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onComplete() {
-
+                                green = value;
                             }
                         });
             }
@@ -181,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 int value = seekBar.getProgress();
-                minger_p50.changeColor(mDevice, 0, 0, value)
+                minger_p50.apply(mDevice, red, green, value, luminosity)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(new Observer<String>() {
                             @Override
@@ -202,7 +209,48 @@ public class MainActivity extends AppCompatActivity {
 
                             @Override
                             public void onComplete() {
+                                blue = value;
+                            }
+                        });
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        ((SeekBar)findViewById(R.id.luminosity)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                int value = seekBar.getProgress();
+                minger_p50.apply(mDevice, red, green, blue, value)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Observer<String>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                slideDisposable.clear();
+                                slideDisposable.add(d);
+                            }
+
+                            @Override
+                            public void onNext(String s) {
+                                Log.e(TAG,"responseFrame="+s);
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                Log.e(TAG,"",e);
+                            }
+
+                            @Override
+                            public void onComplete() {
+                                luminosity = value;
                             }
                         });
             }

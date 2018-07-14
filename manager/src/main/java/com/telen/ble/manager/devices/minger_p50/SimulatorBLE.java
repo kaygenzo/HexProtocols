@@ -10,27 +10,22 @@ import com.telen.ble.manager.data.ProtocolConfiguration;
 import com.telen.ble.manager.devices.GenericDevice;
 import com.telen.ble.manager.di.DaggerWrapper;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
-import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
-public class Minger_P50 implements GenericDevice {
+public class SimulatorBLE implements GenericDevice {
 
     @Inject BleDataLayer dataLayer;
     @Inject Context mContext;
 
     private DeviceConfiguration deviceConfiguration;
 
-    public Minger_P50(Context context) {
+    public SimulatorBLE(Context context) {
         DaggerWrapper.getComponent(context).inject(this);
-        deviceConfiguration = ProtocolConfiguration.parse(mContext, DeviceInfo.MINGER);
+        deviceConfiguration = ProtocolConfiguration.parse(mContext, DeviceInfo.SIMULATOR);
     }
 
     @Override
@@ -43,18 +38,6 @@ public class Minger_P50 implements GenericDevice {
     @Override
     public Completable disconnect(Device device) {
         return dataLayer.disconnect(device)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
-    }
-
-    public Observable<String> apply(Device device, int red, int green, int blue, int value) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("RED",red);
-        data.put("GREEN",green);
-        data.put("BLUE",blue);
-        data.put("LUMINOSITY_1",value);
-        data.put("LUMINOSITY_2",value);
-        return dataLayer.sendCommand(device, deviceConfiguration.getCommand("CHANGE_COLOR"),data)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io());
     }

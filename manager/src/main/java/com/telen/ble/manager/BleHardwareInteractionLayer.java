@@ -1,40 +1,40 @@
 package com.telen.ble.manager;
 
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.util.Log;
 
 import com.polidea.rxandroidble2.RxBleClient;
 import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.RxBleDeviceServices;
-import com.polidea.rxandroidble2.RxBleScanResult;
 import com.polidea.rxandroidble2.Timeout;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
+import com.telen.ble.manager.data.Device;
 import com.telen.ble.manager.interfaces.HardwareLayerInterface;
 import com.telen.ble.manager.utils.BytesUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
-import io.reactivex.CompletableObserver;
-import io.reactivex.MaybeObserver;
 import io.reactivex.Observable;
-import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class BleHardwareInteractionLayer implements HardwareLayerInterface {
 
     private RxBleClient rxBleClient;
+
+    private Map<Device, RxBleDevice> bleDevices = new HashMap<>();
+    private Map<Device, CompositeDisposable> devicesDisposable = new HashMap<>();
+    private Map<Device, RxBleConnection> devicesConnection = new HashMap<>();
+
     private Disposable scanDisposable;
     private static final String TAG = BleHardwareInteractionLayer.class.getSimpleName();
 
@@ -43,119 +43,173 @@ public class BleHardwareInteractionLayer implements HardwareLayerInterface {
     }
 
     @Override
-    public Single<RxBleConnection> connect(final RxBleDevice device) {
-        return Single.create(emitter -> {
-            if(device==null)
+    public Completable connect(Device device) {
+        return Completable.create(emitter -> {
+            if(device==null || !bleDevices.containsKey(device))
                 emitter.onError(new IllegalArgumentException("Cannot connect to a null device"));
-            else
-                device.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                rxBleConnection ->emitter.onSuccess(rxBleConnection),
-                                throwable -> emitter.onError(throwable),
-                                () -> {},
-                                disposable -> {}
-                        );
+            else {
+                if(!devicesDisposable.containsKey(device))
+                    devicesDisposable.put(device, new CompositeDisposable());
+                devicesDisposable.get(device).clear();
+
+                RxBleDevice rxDeviceBle = bleDevices.get(device);
+
+                Disposable observerConnectionDisposable = rxDeviceBle.observeConnectionStateChanges()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .subscribe(rxBleConnectionState -> Log.d(TAG, "state="+rxBleConnectionState.name()));
+
+                Disposable connectionEstablishmentDisposable = rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .subscribe(rxBleConnection -> {
+                            devicesConnection.put(device, rxBleConnection);
+                            emitter.onComplete();
+                        }, emitter::onError, () ->{
+                        });
+
+                devicesDisposable.get(device).add(observerConnectionDisposable);
+                devicesDisposable.get(device).add(connectionEstablishmentDisposable);
+            }
         });
-//                .doOnNext(rxBleConnection -> {
-//                    Log.d(TAG,"rxBleConnection="+rxBleConnection);
-//                    rxBleConnection.discoverServices(30000, TimeUnit.MILLISECONDS)
-//                            .subscribe(new SingleObserver<RxBleDeviceServices>() {
-//                                @Override
-//                                public void onSubscribe(Disposable d) {}
-//
-//                                @Override
-//                                public void onSuccess(RxBleDeviceServices rxBleDeviceServices) {
-//                                    final StringBuilder builder= new StringBuilder();
-//                                    for (BluetoothGattService gattService : rxBleDeviceServices.getBluetoothGattServices()) {
-//                                        builder.append("Service: UUID: "+gattService.getUuid()+"\n");
-//                                        for (BluetoothGattCharacteristic serviceCharacteristic : gattService.getCharacteristics()) {
-//                                            builder.append("\tcharacteristic: UUID: "+serviceCharacteristic.getUuid()+"\n");
-//                                            for(BluetoothGattDescriptor descriptor : serviceCharacteristic.getDescriptors()) {
-//                                                builder.append("\t\tdescriptor: UUID: "+descriptor.getUuid()+"\n");
-//                                            }
-//                                        }
-//                                    }
-//                                    Log.d(TAG,builder.toString());
-//                                }
-//
-//                                @Override
-//                                public void onError(Throwable e) {
-//                                    Log.e(TAG,"",e);
-//                                }
-//                            });
-//                })
     }
 
     @Override
-    public Single<String> sendCommand(RxBleConnection rxBleConnection, UUID characteristic, String command) {
-        return sendCommand(rxBleConnection, characteristic, BytesUtils.hexStringToByteArray(command))
+    public Completable disconnect(Device device) {
+        return Completable.create(emitter -> {
+            if(devicesDisposable.containsKey(device))
+                devicesDisposable.get(device).clear();
+            devicesConnection.get(device);
+            emitter.onComplete();
+        });
+    }
+
+    @Override
+    public Single<String> sendCommand(Device device, UUID characteristic, String command) {
+        return sendCommand(device, characteristic, BytesUtils.hexStringToByteArray(command))
                 .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .observeOn(Schedulers.io())
                 .doOnError(throwable -> Log.e(TAG,"sendCommand",throwable))
                 .doOnSuccess(response -> Log.d(TAG,"sendCommand: response="+response));
     }
 
     @Override
-    public Single<String> sendCommand(RxBleConnection rxBleConnection, UUID characteristic, byte[] command) {
-        return rxBleConnection.writeCharacteristic(characteristic, command).map(BytesUtils::byteArrayToHex);
+    public Single<String> sendCommand(Device device, UUID characteristic, byte[] command) {
+        return Single.create(emitter -> {
+            RxBleConnection bleConnection = devicesConnection.get(device);
+            if(bleConnection == null) {
+                emitter.onError(new Exception("No existing connection to this device"));
+            }
+            else {
+                bleConnection.writeCharacteristic(characteristic, command)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .doOnError(throwable -> Log.e(TAG,"sendCommand",throwable))
+                        .doOnSuccess(response -> Log.d(TAG,"sendCommand: response="+response))
+                .subscribe(new SingleObserver<byte[]>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(byte[] bytes) {
+                        emitter.onSuccess(BytesUtils.byteArrayToHex(bytes));
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        emitter.onError(e);
+                    }
+                });
+            }
+        });
     }
 
     @Override
-    public Observable<String> listenResponses(RxBleConnection rxBleConnection, UUID uuid) {
-        if(rxBleConnection==null)
-            return Observable.error(new IllegalArgumentException("Connection is null, cannot listen for response frames"));
-        return rxBleConnection.setupIndication(uuid)
-                .flatMap(responseBytesObservable -> responseBytesObservable)
-                .map(BytesUtils::byteArrayToHex);
+    public Observable<String> listenResponses(Device device, UUID uuid) {
+//        if(rxBleConnection==null)
+//            return Observable.error(new IllegalArgumentException("Connection is null, cannot listen for response frames"));
+//        return rxBleConnection.setupIndication(uuid)
+//                .flatMap(responseBytesObservable -> responseBytesObservable)
+//                .map(BytesUtils::byteArrayToHex);
+        return Observable.empty();
     }
 
     @Override
-    public Observable<ScanResult> scan(String deviceName) {
-        ScanSettings settings = new ScanSettings.Builder()
-                .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-                .build();
+    public Single<Device> scan(String deviceName) {
+        return Single.create(emitter -> {
+            final ScanSettings settings = new ScanSettings.Builder()
+                    .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                    .build();
 
-        ScanFilter filter = new ScanFilter.Builder()
-                .setDeviceName(deviceName)
-                .build();
+            final ScanFilter filter = new ScanFilter.Builder()
+                    .setDeviceName(deviceName)
+                    .build();
 
-        return rxBleClient.scanBleDevices(settings, filter)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
+            rxBleClient.scanBleDevices(settings, filter)
+                    .firstOrError()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.io())
+                    .subscribe(new SingleObserver<ScanResult>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                            dispose(scanDisposable);
+                            scanDisposable = d;
+                        }
+
+                        @Override
+                        public void onSuccess(ScanResult scanResult) {
+                            Device device = new Device(scanResult.getBleDevice().getName(), scanResult.getBleDevice().getMacAddress());
+                            bleDevices.put(device, scanResult.getBleDevice());
+                            dispose(scanDisposable);
+                            emitter.onSuccess(device);
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            emitter.onError(e);
+                        }
+                    });
+        });
     }
 
     @Override
-    public Observable<RxBleScanResult> scanOld(String deviceName) {
-        return Observable.create(emitter -> {
+    public Single<Device> scanOld(String deviceName) {
+        return Single.create(emitter -> {
 
-            if(scanDisposable!=null && !scanDisposable.isDisposed())
-                scanDisposable.dispose();
+            dispose(scanDisposable);
 
             scanDisposable = rxBleClient.scanBleDevices()
                     .filter(rxBleScanResult ->
                             rxBleScanResult.getBleDevice().getName()!=null && rxBleScanResult.getBleDevice().getName().equals(deviceName))
-                    .firstElement()
+                    .firstOrError()
                     .flatMapCompletable(rxBleScanResult -> {
-                        if(scanDisposable!=null && !scanDisposable.isDisposed())
-                            scanDisposable.dispose();
-                        emitter.onNext(rxBleScanResult);
-                        emitter.onComplete();
+                        dispose(scanDisposable);
+                        Device device = new Device(rxBleScanResult.getBleDevice().getName(), rxBleScanResult.getBleDevice().getMacAddress());
+                        bleDevices.put(device, rxBleScanResult.getBleDevice());
+                        emitter.onSuccess(device);
                         return Completable.complete();
                     })
-                    .subscribeOn(AndroidSchedulers.mainThread())
-                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.io())
                     .subscribe();
         });
     }
 
     @Override
-    public Single<RxBleDeviceServices> getServices(RxBleConnection rxBleConnection) {
-        if(rxBleConnection==null)
-            return Single.error(new IllegalArgumentException("Connection is null, cannot get services"));
-        return rxBleConnection.discoverServices(30000, TimeUnit.MILLISECONDS)
-                .subscribeOn(AndroidSchedulers.mainThread())
-                .observeOn(AndroidSchedulers.mainThread());
+    public Single<RxBleDeviceServices> getServices(Device device) {
+//        if(rxBleConnection==null)
+//            return Single.error(new IllegalArgumentException("Connection is null, cannot get services"));
+//        return rxBleConnection.discoverServices(30000, TimeUnit.MILLISECONDS)
+//                .subscribeOn(AndroidSchedulers.mainThread())
+//                .observeOn(AndroidSchedulers.mainThread());
+        return null;
+    }
+
+    private void dispose(Disposable disposable) {
+        if(disposable!=null && !disposable.isDisposed())
+            disposable.dispose();
     }
 }

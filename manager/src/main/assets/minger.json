@@ -63,6 +63,8 @@
             "start": 14,
             "end": 14,
             "type": "INTEGER",
+            "min": 0,
+            "max": 255,
             "value": 2
           },
           {

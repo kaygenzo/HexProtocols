@@ -1,6 +1,7 @@
 package com.telen.ble.manager.di;
 
 import com.telen.ble.manager.devices.minger_p50.Minger_P50;
+import com.telen.ble.manager.devices.minger_p50.SimulatorBLE;
 
 import javax.inject.Singleton;
 
@@ -12,4 +13,5 @@ import dagger.Component;
 })
 public interface LibraryComponent {
     void inject(Minger_P50 device);
+    void inject(SimulatorBLE device);
 }

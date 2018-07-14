@@ -4,10 +4,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.RestrictTo;
 import android.util.Log;
 
-import com.polidea.rxandroidble2.RxBleConnection;
-import com.polidea.rxandroidble2.RxBleDevice;
-import com.polidea.rxandroidble2.RxBleScanResult;
-import com.polidea.rxandroidble2.Timeout;
 import com.telen.ble.manager.data.Command;
 import com.telen.ble.manager.data.Device;
 import com.telen.ble.manager.data.Payload;
@@ -17,23 +13,18 @@ import com.telen.ble.manager.interfaces.HardwareLayerInterface;
 import com.telen.ble.manager.validator.DataValidator;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
-import io.reactivex.MaybeObserver;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.Observer;
 import io.reactivex.Single;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class BleDataLayer implements BleDataLayerInterface {
@@ -42,9 +33,6 @@ public class BleDataLayer implements BleDataLayerInterface {
 
     private long TIMEOUT_MILLIS = 30000l;
 
-    private Map<Device, RxBleDevice> devices = new HashMap<>();
-    private Map<Device, CompositeDisposable> devicesDisposable = new HashMap<>();
-    private Map<Device, RxBleConnection> devicesConnection = new HashMap<>();
     private CompositeDisposable timeoutDisposable = new CompositeDisposable();
 
     private HardwareLayerInterface hardwareInteractionLayer;
@@ -58,79 +46,30 @@ public class BleDataLayer implements BleDataLayerInterface {
 
     @Override
     public Single<Device> connect(String deviceName) {
-
-        return Single.create(emitter -> {
-            hardwareInteractionLayer.scan(deviceName)
-                    .firstElement()
-                    .toSingle()
-                    .flatMapCompletable(rxBleScanResult -> hardwareInteractionLayer.connect(rxBleScanResult.getBleDevice())
-                            .flatMapCompletable(rxBleConnection -> {
-                                Device device = new Device(deviceName, rxBleScanResult.getBleDevice().getMacAddress());
-                                devicesConnection.put(device, rxBleConnection);
-                                devices.put(device, rxBleScanResult.getBleDevice());
-
-                                CompositeDisposable composite = devicesDisposable.remove(device);
-                                if(composite!=null && !composite.isDisposed())
-                                    composite.clear();
-
-                                devicesDisposable.put(device, new CompositeDisposable());
-                                emitter.onSuccess(device);
-                                return Completable.complete();
-                            })
-                            .subscribeOn(Schedulers.io())
-                    )
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe();
-        });
-
-//        return hardwareInteractionLayer.scanOld(deviceName)
-//                .subscribeOn(AndroidSchedulers.mainThread())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .doOnNext(scanResult -> Log.d(TAG,"device found: "+scanResult.getBleDevice().getName()))
-//                .firstElement()
-//                .toSingle()
-//                .flatMap(scanResult -> hardwareInteractionLayer.connect(scanResult.getBleDevice())
-//                        .flatMap(rxBleConnection -> {
-//                            Device device = new Device(deviceName, scanResult.getBleDevice().getMacAddress());
-//                            devicesConnection.put(device, rxBleConnection);
-//                            devices.put(device, scanResult.getBleDevice());
-//
-//                            CompositeDisposable composite = devicesDisposable.remove(device);
-//                            if(composite!=null && !composite.isDisposed())
-//                                composite.clear();
-//
-//                            devicesDisposable.put(device, new CompositeDisposable());
-//                            return Single.just(device);
-//                        })
-//                )
-//                .subscribeOn(AndroidSchedulers.mainThread())
-//                .observeOn(AndroidSchedulers.mainThread());
+        return Single.create(emitter -> hardwareInteractionLayer.scan(deviceName)
+                .flatMapCompletable(device -> hardwareInteractionLayer.connect(device)
+                       .doOnComplete(() -> emitter.onSuccess(device)))
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(() -> {}, emitter::onError));
     }
 
     @Override
     public Completable disconnect(Device device) {
-        return Completable.create(e -> {
-            CompositeDisposable disposable = devicesDisposable.remove(device);
-            if(disposable!=null && !disposable.isDisposed())
-                devicesDisposable.clear();
-            devicesConnection.remove(device);
-            devices.remove(device);
-            e.onComplete();
-        });
+            return hardwareInteractionLayer.disconnect(device)
+                    .subscribeOn(Schedulers.io());
     }
 
     @Override
     public Observable<String> sendCommand(Device device, Command command, Map<String, Object> data) {
-        return Observable.create(e -> {
-            RxBleConnection rxBleConnection = devicesConnection.get(device);
+        return Observable.create(emitter -> {
             //let's validate payloads and build the hexa string command
             dataValidator.validateData(command.getRequest().getPayloads(), data)
                     .andThen(buildHexaCommand(command.getRequest().getPayloads(), data))
                     .flatMap(hexaCommand -> {
-                        startTimeout(e);
+                        startTimeout(emitter);
                         UUID uuid = UUID.fromString(command.getRequest().getCharacteristic());
-                        return hardwareInteractionLayer.sendCommand(rxBleConnection, uuid, hexaCommand);
+                        return hardwareInteractionLayer.sendCommand(device, uuid, hexaCommand);
                     })
                     .flatMapObservable(responseFrame -> {
                         stopTimeout();
@@ -138,7 +77,7 @@ public class BleDataLayer implements BleDataLayerInterface {
                         //if we expect some response from remote device, we listen for any response
                         if(command.getResponse()!=null)
                             return hardwareInteractionLayer
-                                    .listenResponses(rxBleConnection, UUID.fromString(command.getResponse().getCharacteristic()))
+                                    .listenResponses(device, UUID.fromString(command.getResponse().getCharacteristic()))
                                     .flatMap(response -> dataValidator.validateData(command.getResponse().getPayloads(), response)
                                             .andThen(Observable.just(response))
                                     );
@@ -148,28 +87,21 @@ public class BleDataLayer implements BleDataLayerInterface {
                     .subscribe(new Observer<String>() {
                         @Override
                         public void onSubscribe(Disposable d) {
-                            CompositeDisposable disposable = devicesDisposable.get(device);
-                            if(disposable==null)
-                            {
-                                disposable = new CompositeDisposable();
-                                devicesDisposable.put(device, disposable);
-                            }
-                            disposable.add(d);
                         }
 
                         @Override
                         public void onNext(String s) {
-                            e.onNext(s);
+                            emitter.onNext(s);
                         }
 
                         @Override
                         public void onError(Throwable error) {
-                            e.onError(error);
+                            emitter.onError(error);
                         }
 
                         @Override
                         public void onComplete() {
-                            e.onComplete();
+                            emitter.onComplete();
                         }
                     });
         });
@@ -232,19 +164,19 @@ public class BleDataLayer implements BleDataLayerInterface {
     }
 
     private void startTimeout(ObservableEmitter emitter) {
-//        if(TIMEOUT_MILLIS>0) {
-//            timeoutDisposable.add(Observable.timer(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).subscribe(
-//                    aLong -> {
-//                    },
-//                    throwable -> {
-//                    },
-//                    () -> {
-//                        if(emitter!=null && !emitter.isDisposed())
-//                            emitter.onError(new CommandTimeoutException("Command timeout triggered"));
-//                    }
-//                    )
-//            );
-//        }
+        if(TIMEOUT_MILLIS>0) {
+            timeoutDisposable.add(Observable.timer(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).subscribe(
+                    aLong -> {
+                    },
+                    throwable -> {
+                    },
+                    () -> {
+                        if(emitter!=null && !emitter.isDisposed())
+                            emitter.onError(new CommandTimeoutException("Command timeout triggered"));
+                    }
+                    )
+            );
+        }
     }
 
     private void stopTimeout() {
@@ -253,18 +185,6 @@ public class BleDataLayer implements BleDataLayerInterface {
 
     public void setTimeout(long timeout) {
         this.TIMEOUT_MILLIS = timeout;
-    }
-
-    public Map<Device, RxBleConnection> getRxConnections() {
-        return devicesConnection;
-    }
-
-    public Map<Device, CompositeDisposable> getDevicesDisposable() {
-        return devicesDisposable;
-    }
-
-    public Map<Device, RxBleDevice> getDevices() {
-        return devices;
     }
 
     private String[] splitStringByLength(String string, int length) {
