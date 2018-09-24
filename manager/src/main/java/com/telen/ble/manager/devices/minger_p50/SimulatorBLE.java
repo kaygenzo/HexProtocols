@@ -2,11 +2,11 @@ package com.telen.ble.manager.devices.minger_p50;
 
 import android.content.Context;
 
-import com.telen.ble.manager.BleDataLayer;
-import com.telen.ble.manager.data.Device;
-import com.telen.ble.manager.data.DeviceConfiguration;
-import com.telen.ble.manager.data.DeviceInfo;
-import com.telen.ble.manager.data.ProtocolConfiguration;
+import com.telen.ble.manager.layers.impl.DataLayerImpl;
+import com.telen.ble.manager.model.Device;
+import com.telen.ble.manager.model.DeviceConfiguration;
+import com.telen.ble.manager.model.DeviceInfo;
+import com.telen.ble.manager.model.ProtocolConfiguration;
 import com.telen.ble.manager.devices.GenericDevice;
 import com.telen.ble.manager.di.DaggerWrapper;
 
@@ -18,7 +18,8 @@ import io.reactivex.schedulers.Schedulers;
 
 public class SimulatorBLE implements GenericDevice {
 
-    @Inject BleDataLayer dataLayer;
+    @Inject
+    DataLayerImpl dataLayer;
     @Inject Context mContext;
 
     private DeviceConfiguration deviceConfiguration;

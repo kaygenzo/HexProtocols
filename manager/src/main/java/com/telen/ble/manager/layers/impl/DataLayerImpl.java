@@ -1,15 +1,16 @@
-package com.telen.ble.manager;
+package com.telen.ble.manager.layers.impl;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
 import android.util.Log;
 
-import com.telen.ble.manager.data.Command;
-import com.telen.ble.manager.data.Device;
-import com.telen.ble.manager.data.Payload;
+import com.telen.ble.manager.model.Command;
+import com.telen.ble.manager.model.Device;
+import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.CommandTimeoutException;
-import com.telen.ble.manager.interfaces.BleDataLayerInterface;
-import com.telen.ble.manager.interfaces.HardwareLayerInterface;
+import com.telen.ble.manager.layers.DataLayerInterface;
+import com.telen.ble.manager.layers.HardwareLayerInterface;
 import com.telen.ble.manager.validator.DataValidator;
 
 import java.util.Arrays;
@@ -23,22 +24,24 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.Observer;
 import io.reactivex.Single;
+import io.reactivex.SingleObserver;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class BleDataLayer implements BleDataLayerInterface {
+public class DataLayerImpl implements DataLayerInterface {
 
-    private static final String TAG = BleDataLayer.class.getSimpleName();
+    private static final String TAG = DataLayerImpl.class.getSimpleName();
 
     private long TIMEOUT_MILLIS = 30000l;
 
     private CompositeDisposable timeoutDisposable = new CompositeDisposable();
+    private CompositeDisposable dataListenerDisposable = new CompositeDisposable();
 
     private HardwareLayerInterface hardwareInteractionLayer;
     private DataValidator dataValidator;
 
-    public BleDataLayer(HardwareLayerInterface hardwareLayer, DataValidator validator) {
+    public DataLayerImpl(HardwareLayerInterface hardwareLayer, DataValidator validator) {
         this.hardwareInteractionLayer = hardwareLayer;
         this.dataValidator = validator;
     }
@@ -63,59 +66,80 @@ public class BleDataLayer implements BleDataLayerInterface {
     @Override
     public Observable<String> sendCommand(Device device, Command command, Map<String, Object> data) {
         return Observable.create(emitter -> {
+            dataListenerDisposable.clear();
             //let's validate payloads and build the hexa string command
             dataValidator.validateData(command.getRequest().getPayloads(), data)
                     .andThen(buildHexaCommand(command.getRequest().getPayloads(), data))
                     .flatMap(hexaCommand -> {
                         startTimeout(emitter);
-                        UUID uuid = UUID.fromString(command.getRequest().getCharacteristic());
-                        return hardwareInteractionLayer.sendCommand(device, uuid, hexaCommand);
-                    })
-                    .flatMapObservable(responseFrame -> {
-                        stopTimeout();
-                        Log.d(TAG,"Sent -- responseFrame="+responseFrame);
-                        //if we expect some response from remote device, we listen for any response
-                        if(command.getResponse()!=null)
-                            return hardwareInteractionLayer
-                                    .listenResponses(device, UUID.fromString(command.getResponse().getCharacteristic()))
+                        UUID requestUuid = UUID.fromString(command.getRequest().getCharacteristic());
+                        UUID responseUuid = UUID.fromString(command.getResponse().getCharacteristic());
+                        //if we expect some response from remote device, we listen for any response before sending command
+                        if(command.getResponse()!=null) {
+                            hardwareInteractionLayer
+                                    .listenResponses(device, responseUuid)
                                     .flatMap(response -> dataValidator.validateData(command.getResponse().getPayloads(), response)
-                                            .andThen(Observable.just(response))
-                                    );
-                        else
-                            return Observable.empty();
+                                            .andThen(Observable.just(response)))
+                            .subscribe(new Observer<String>() {
+                                @Override
+                                public void onSubscribe(Disposable d) {
+                                    dataListenerDisposable.add(d);
+                                }
+
+                                @Override
+                                public void onNext(String s) {
+                                    emitter.onNext(s);
+                                    String endFrame = command.getResponse().getEndFrame();
+                                    if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
+                                        dataListenerDisposable.clear();
+                                        emitter.onComplete();
+                                    }
+                                }
+
+                                @Override
+                                public void onError(Throwable e) {
+                                    emitter.onError(e);
+                                }
+
+                                @Override
+                                public void onComplete() {
+                                    emitter.onComplete();
+                                }
+                            });
+                        }
+                        return hardwareInteractionLayer.sendCommand(device, requestUuid, hexaCommand);
                     })
-                    .subscribe(new Observer<String>() {
+                    .subscribe(new SingleObserver<String>() {
                         @Override
                         public void onSubscribe(Disposable d) {
+
                         }
 
                         @Override
-                        public void onNext(String s) {
-                            emitter.onNext(s);
+                        public void onSuccess(String responseFrame) {
+                            stopTimeout();
+                            Log.d(TAG,"Sent -- responseFrame="+responseFrame);
                         }
 
                         @Override
-                        public void onError(Throwable error) {
-                            emitter.onError(error);
-                        }
-
-                        @Override
-                        public void onComplete() {
-                            emitter.onComplete();
+                        public void onError(Throwable e) {
+                            emitter.onError(e);
                         }
                     });
         });
     }
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public Single<String> buildHexaCommand(@NonNull List<Payload> payloads, @NonNull Map<String, Object> data) {
+    public Single<String> buildHexaCommand(@NonNull List<Payload> payloads, @Nullable Map<String, Object> data) {
         return Single.create(emitter -> {
             String[] commandArray = new String[20];
             Arrays.fill(commandArray, "00");
 
             for (Payload payload: payloads) {
                 String identifier = payload.getName();
-                Object obj = data.get(identifier);
+                Object obj = null;
+                if(data != null)
+                    obj = data.get(identifier);
                 if(obj==null)
                     obj = payload.getValue();
                 int start = payload.getStart();

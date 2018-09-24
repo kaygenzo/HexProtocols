@@ -1,6 +1,6 @@
 package com.telen.ble.manager.devices;
 
-import com.telen.ble.manager.data.Device;
+import com.telen.ble.manager.model.Device;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;

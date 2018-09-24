@@ -1,11 +1,10 @@
 package com.telen.ble.manager.validator;
 
-import com.telen.ble.manager.data.Payload;
+import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.InvalidPayloadLengthException;
 import com.telen.ble.manager.exceptions.InvalidPayloadValueException;
 import com.telen.ble.manager.exceptions.PayloadOutOfBoundsException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +14,12 @@ import io.reactivex.Completable;
 public class DataValidator {
     public Completable validateData(List<Payload> payloads, Map<String, Object> dataToValidate) {
         return Completable.create(emitter -> {
+
+            if(dataToValidate==null) {
+                //nothing to validate
+                emitter.onComplete();
+                return;
+            }
 
             Map<String, Payload> payloadsMap = new HashMap<>();
             for (Payload payload: payloads) {
@@ -51,6 +56,11 @@ public class DataValidator {
 
     public Completable validateData(List<Payload> payloads, String hexString) {
         return Completable.create(emitter -> {
+
+            if(payloads==null || payloads.isEmpty()) {
+                emitter.onComplete();
+                return;
+            }
 
             for (Payload payload: payloads) {
                 int start = payload.getStart()*2;

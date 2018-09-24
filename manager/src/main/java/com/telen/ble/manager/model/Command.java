@@ -1,4 +1,4 @@
-package com.telen.ble.manager.data;
+package com.telen.ble.manager.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

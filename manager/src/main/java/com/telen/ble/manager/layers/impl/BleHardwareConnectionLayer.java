@@ -1,4 +1,4 @@
-package com.telen.ble.manager;
+package com.telen.ble.manager.layers.impl;
 
 import android.util.Log;
 
@@ -10,8 +10,8 @@ import com.polidea.rxandroidble2.Timeout;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
-import com.telen.ble.manager.data.Device;
-import com.telen.ble.manager.interfaces.HardwareLayerInterface;
+import com.telen.ble.manager.model.Device;
+import com.telen.ble.manager.layers.HardwareLayerInterface;
 import com.telen.ble.manager.utils.BytesUtils;
 
 import java.util.HashMap;
@@ -21,13 +21,14 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class BleHardwareInteractionLayer implements HardwareLayerInterface {
+public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
     private RxBleClient rxBleClient;
 
@@ -36,9 +37,9 @@ public class BleHardwareInteractionLayer implements HardwareLayerInterface {
     private Map<Device, RxBleConnection> devicesConnection = new HashMap<>();
 
     private Disposable scanDisposable;
-    private static final String TAG = BleHardwareInteractionLayer.class.getSimpleName();
+    private static final String TAG = BleHardwareConnectionLayer.class.getSimpleName();
 
-    public BleHardwareInteractionLayer(RxBleClient rxBleClient) {
+    public BleHardwareConnectionLayer(RxBleClient rxBleClient) {
         this.rxBleClient = rxBleClient;
     }
 
@@ -128,17 +129,44 @@ public class BleHardwareInteractionLayer implements HardwareLayerInterface {
 
     @Override
     public Observable<String> listenResponses(Device device, UUID uuid) {
-//        if(rxBleConnection==null)
-//            return Observable.error(new IllegalArgumentException("Connection is null, cannot listen for response frames"));
-//        return rxBleConnection.setupIndication(uuid)
-//                .flatMap(responseBytesObservable -> responseBytesObservable)
-//                .map(BytesUtils::byteArrayToHex);
-        return Observable.empty();
+        return Observable.create(emitter -> {
+            RxBleConnection bleConnection = devicesConnection.get(device);
+            if(bleConnection == null) {
+                emitter.onError(new Exception("Connection is null, cannot listen for response frames"));
+            }
+            else {
+                bleConnection.setupNotification(uuid)
+                        .flatMap(responseBytesObservable -> responseBytesObservable)
+                        .map(BytesUtils::byteArrayToHex)
+                        .subscribe(new Observer<String>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                devicesDisposable.get(device).add(d);
+                            }
+
+                            @Override
+                            public void onNext(String s) {
+                                emitter.onNext(s);
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                emitter.onError(e);
+                            }
+
+                            @Override
+                            public void onComplete() {
+                                emitter.onComplete();
+                            }
+                        });
+            }
+        });
     }
 
     @Override
     public Single<Device> scan(String deviceName) {
         return Single.create(emitter -> {
+
             final ScanSettings settings = new ScanSettings.Builder()
                     .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)

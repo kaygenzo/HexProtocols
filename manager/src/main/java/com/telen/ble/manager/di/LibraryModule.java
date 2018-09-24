@@ -3,9 +3,9 @@ package com.telen.ble.manager.di;
 import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
-import com.telen.ble.manager.BleDataLayer;
-import com.telen.ble.manager.BleHardwareInteractionLayer;
-import com.telen.ble.manager.interfaces.HardwareLayerInterface;
+import com.telen.ble.manager.layers.impl.DataLayerImpl;
+import com.telen.ble.manager.layers.impl.BleHardwareConnectionLayer;
+import com.telen.ble.manager.layers.HardwareLayerInterface;
 import com.telen.ble.manager.validator.DataValidator;
 
 import javax.inject.Singleton;
@@ -24,14 +24,14 @@ public class LibraryModule {
 
     @Singleton
     @Provides
-    public BleDataLayer provideDataLayer(HardwareLayerInterface hardwareLayer, DataValidator dataValidator) {
-        return new BleDataLayer(hardwareLayer, dataValidator);
+    public DataLayerImpl provideDataLayer(HardwareLayerInterface hardwareLayer, DataValidator dataValidator) {
+        return new DataLayerImpl(hardwareLayer, dataValidator);
     }
 
     @Singleton
     @Provides
     public HardwareLayerInterface provideHardwareLayer(RxBleClient client) {
-        return new BleHardwareInteractionLayer(client);
+        return new BleHardwareConnectionLayer(client);
     }
 
     @Singleton

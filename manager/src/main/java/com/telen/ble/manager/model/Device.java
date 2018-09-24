@@ -1,4 +1,4 @@
-package com.telen.ble.manager.data;
+package com.telen.ble.manager.model;
 
 import java.util.Objects;
 

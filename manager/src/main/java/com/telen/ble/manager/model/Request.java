@@ -1,11 +1,11 @@
-package com.telen.ble.manager.data;
+package com.telen.ble.manager.model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class Response {
+public class Request {
     @SerializedName("service")
     @Expose
     private String service;
@@ -18,12 +18,12 @@ public class Response {
     @Expose
     private List<Payload> payloads;
 
+    @SerializedName("length")
+    @Expose
+    private int length;
+
     public String getService() {
         return service;
-    }
-
-    public void setService(String service) {
-        this.service = service;
     }
 
     public String getCharacteristic() {
@@ -40,5 +40,13 @@ public class Response {
 
     public void setPayloads(List<Payload> payloads) {
         this.payloads = payloads;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public void setLength(int length) {
+        this.length = length;
     }
 }
