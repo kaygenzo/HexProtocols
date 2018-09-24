@@ -34,8 +34,15 @@ public class Minger_P50 implements GenericDevice {
     }
 
     @Override
-    public Single<Device> connect() {
-        return dataLayer.connect(deviceConfiguration.getDeviceNames()[0])
+    public Single<Device> scan() {
+        return dataLayer.scan(deviceConfiguration.getDeviceNames()[0])
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io());
+    }
+
+    @Override
+    public Single<Device> connect(Device device, boolean createBond) {
+        return dataLayer.connect(device, createBond)
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io());
     }

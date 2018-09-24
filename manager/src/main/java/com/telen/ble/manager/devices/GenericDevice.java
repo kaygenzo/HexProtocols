@@ -6,6 +6,7 @@ import io.reactivex.Completable;
 import io.reactivex.Single;
 
 public interface GenericDevice {
-    Single<Device> connect();
+    Single<Device> scan();
+    Single<Device> connect(Device device, boolean createBond);
     Completable disconnect(Device device);
 }

@@ -10,7 +10,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 
 public interface HardwareLayerInterface {
-    Completable connect(Device device);
+    Completable connect(Device device, boolean createBond);
     Completable disconnect(Device device);
     Single<String> sendCommand(Device device, UUID characteristic, String command);
     Single<String> sendCommand(Device device, UUID characteristic, byte[] command);
@@ -18,4 +18,5 @@ public interface HardwareLayerInterface {
     Single<Device> scan(String deviceName);
     Single<Device> scanOld(String deviceName);
     Single<RxBleDeviceServices> getServices(Device device);
+    Single<Boolean> isBonded(String macAddress);
 }

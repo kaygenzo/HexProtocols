@@ -1,5 +1,7 @@
 package com.telen.ble.manager.di;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
@@ -30,8 +32,8 @@ public class LibraryModule {
 
     @Singleton
     @Provides
-    public HardwareLayerInterface provideHardwareLayer(RxBleClient client) {
-        return new BleHardwareConnectionLayer(client);
+    public HardwareLayerInterface provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter) {
+        return new BleHardwareConnectionLayer(client, bluetoothAdapter);
     }
 
     @Singleton
@@ -50,5 +52,15 @@ public class LibraryModule {
     @Singleton
     public Context provideContext() {
         return context;
+    }
+
+    @Provides
+    @Singleton
+    public BluetoothAdapter provideBluetoothAdapter(Context context) {
+        BluetoothManager manager = (BluetoothManager)context.getSystemService(Context.BLUETOOTH_SERVICE);
+        if(manager!=null)
+            return manager.getAdapter();
+        else
+            return null;
     }
 }

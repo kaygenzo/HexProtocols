@@ -10,7 +10,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 
 public interface DataLayerInterface {
-    Single<Device> connect(String deviceName);
+    Single<Device> scan(String deviceName);
+    Single<Device> connect(Device device, boolean createBond);
     Completable disconnect(Device device);
     Observable<String> sendCommand(Device device, Command command, Map<String, Object> data);
 }

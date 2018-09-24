@@ -48,13 +48,22 @@ public class DataLayerImpl implements DataLayerInterface {
 
 
     @Override
-    public Single<Device> connect(String deviceName) {
+    public Single<Device> scan(String deviceName) {
         return Single.create(emitter -> hardwareInteractionLayer.scan(deviceName)
-                .flatMapCompletable(device -> hardwareInteractionLayer.connect(device)
-                       .doOnComplete(() -> emitter.onSuccess(device)))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
-                .subscribe(() -> {}, emitter::onError));
+                .subscribe(emitter::onSuccess, emitter::onError));
+    }
+
+    @Override
+    public Single<Device> connect(Device device, boolean createBond) {
+        return Single.create(emitter ->
+                hardwareInteractionLayer.connect(device, createBond)
+                        .doOnComplete(() -> emitter.onSuccess(device))
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .subscribe(() -> {}, emitter::onError)
+        );
     }
 
     @Override
@@ -73,9 +82,9 @@ public class DataLayerImpl implements DataLayerInterface {
                     .flatMap(hexaCommand -> {
                         startTimeout(emitter);
                         UUID requestUuid = UUID.fromString(command.getRequest().getCharacteristic());
-                        UUID responseUuid = UUID.fromString(command.getResponse().getCharacteristic());
                         //if we expect some response from remote device, we listen for any response before sending command
                         if(command.getResponse()!=null) {
+                            UUID responseUuid = UUID.fromString(command.getResponse().getCharacteristic());
                             hardwareInteractionLayer
                                     .listenResponses(device, responseUuid)
                                     .flatMap(response -> dataValidator.validateData(command.getResponse().getPayloads(), response)
@@ -119,11 +128,16 @@ public class DataLayerImpl implements DataLayerInterface {
                         public void onSuccess(String responseFrame) {
                             stopTimeout();
                             Log.d(TAG,"Sent -- responseFrame="+responseFrame);
+                            if(command.getResponse()==null) {
+                                Log.d(TAG,"Don't need to wait for any response, bye bye!");
+                                emitter.onComplete();
+                            }
                         }
 
                         @Override
                         public void onError(Throwable e) {
-                            emitter.onError(e);
+                            if(!emitter.isDisposed())
+                                emitter.onError(e);
                         }
                     });
         });

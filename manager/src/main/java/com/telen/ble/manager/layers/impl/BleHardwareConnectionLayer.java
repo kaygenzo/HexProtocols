@@ -1,5 +1,7 @@
 package com.telen.ble.manager.layers.impl;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 
 import com.polidea.rxandroidble2.RxBleClient;
@@ -16,6 +18,7 @@ import com.telen.ble.manager.utils.BytesUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +34,7 @@ import io.reactivex.schedulers.Schedulers;
 public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
     private RxBleClient rxBleClient;
+    private BluetoothAdapter mBluetoothAdapter;
 
     private Map<Device, RxBleDevice> bleDevices = new HashMap<>();
     private Map<Device, CompositeDisposable> devicesDisposable = new HashMap<>();
@@ -39,12 +43,12 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     private Disposable scanDisposable;
     private static final String TAG = BleHardwareConnectionLayer.class.getSimpleName();
 
-    public BleHardwareConnectionLayer(RxBleClient rxBleClient) {
+    public BleHardwareConnectionLayer(RxBleClient rxBleClient, BluetoothAdapter bluetoothAdapter) {
         this.rxBleClient = rxBleClient;
     }
 
     @Override
-    public Completable connect(Device device) {
+    public Completable connect(Device device, boolean createBond) {
         return Completable.create(emitter -> {
             if(device==null || !bleDevices.containsKey(device))
                 emitter.onError(new IllegalArgumentException("Cannot connect to a null device"));
@@ -60,17 +64,19 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                         .observeOn(Schedulers.io())
                         .subscribe(rxBleConnectionState -> Log.d(TAG, "state="+rxBleConnectionState.name()));
 
-                Disposable connectionEstablishmentDisposable = rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .subscribe(rxBleConnection -> {
-                            devicesConnection.put(device, rxBleConnection);
-                            emitter.onComplete();
-                        }, emitter::onError, () ->{
-                        });
-
                 devicesDisposable.get(device).add(observerConnectionDisposable);
-                devicesDisposable.get(device).add(connectionEstablishmentDisposable);
+
+
+                    Disposable connectionEstablishmentDisposable = rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(Schedulers.io())
+                            .subscribe(rxBleConnection -> {
+                                devicesConnection.put(device, rxBleConnection);
+                                emitter.onComplete();
+                            }, emitter::onError, () -> {
+                            });
+                    devicesDisposable.get(device).add(connectionEstablishmentDisposable);
+
             }
         });
     }
@@ -234,6 +240,27 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 //                .subscribeOn(AndroidSchedulers.mainThread())
 //                .observeOn(AndroidSchedulers.mainThread());
         return null;
+    }
+
+    @Override
+    public Single<Boolean> isBonded(String macAddress) {
+        return Single.create(emitter -> {
+            if(mBluetoothAdapter==null) {
+                emitter.onError(new Exception("BluetoothAdapter is null, it's not permitted here!"));
+            }
+            else {
+                Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
+                if(bondedDevices!=null && !bondedDevices.isEmpty()) {
+                    for (BluetoothDevice device : bondedDevices) {
+                        if(device.getAddress().equals(macAddress)) {
+                            emitter.onSuccess(Boolean.TRUE);
+                            return;
+                        }
+                    }
+                }
+                emitter.onSuccess(Boolean.FALSE);
+            }
+        });
     }
 
     private void dispose(Disposable disposable) {
