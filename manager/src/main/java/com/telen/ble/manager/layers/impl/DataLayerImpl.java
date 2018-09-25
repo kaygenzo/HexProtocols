@@ -59,10 +59,9 @@ public class DataLayerImpl implements DataLayerInterface {
     public Single<Device> connect(Device device, boolean createBond) {
         return Single.create(emitter ->
                 hardwareInteractionLayer.connect(device, createBond)
-                        .doOnComplete(() -> emitter.onSuccess(device))
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
-                        .subscribe(() -> {}, emitter::onError)
+                        .subscribe(() -> emitter.onSuccess(device), emitter::onError)
         );
     }
 
@@ -141,6 +140,11 @@ public class DataLayerImpl implements DataLayerInterface {
                         }
                     });
         });
+    }
+
+    @Override
+    public Single<Boolean> isBonded(Device device) {
+        return hardwareInteractionLayer.isBonded(device.getMacAddress());
     }
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)

@@ -32,8 +32,8 @@ public class LibraryModule {
 
     @Singleton
     @Provides
-    public HardwareLayerInterface provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter) {
-        return new BleHardwareConnectionLayer(client, bluetoothAdapter);
+    public HardwareLayerInterface provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter, Context context) {
+        return new BleHardwareConnectionLayer(client, bluetoothAdapter, context);
     }
 
     @Singleton

@@ -14,4 +14,5 @@ public interface DataLayerInterface {
     Single<Device> connect(Device device, boolean createBond);
     Completable disconnect(Device device);
     Observable<String> sendCommand(Device device, Command command, Map<String, Object> data);
+    Single<Boolean> isBonded(Device device);
 }

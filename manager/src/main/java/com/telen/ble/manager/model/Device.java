@@ -24,4 +24,12 @@ public class Device {
     public int hashCode() {
         return Objects.hash(name, macAddress);
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
 }

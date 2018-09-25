@@ -2,6 +2,10 @@ package com.telen.ble.manager.layers.impl;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import com.polidea.rxandroidble2.RxBleClient;
@@ -29,10 +33,12 @@ import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
+    private Context mContext;
     private RxBleClient rxBleClient;
     private BluetoothAdapter mBluetoothAdapter;
 
@@ -43,8 +49,10 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     private Disposable scanDisposable;
     private static final String TAG = BleHardwareConnectionLayer.class.getSimpleName();
 
-    public BleHardwareConnectionLayer(RxBleClient rxBleClient, BluetoothAdapter bluetoothAdapter) {
+    public BleHardwareConnectionLayer(RxBleClient rxBleClient, BluetoothAdapter bluetoothAdapter, Context context) {
         this.rxBleClient = rxBleClient;
+        this.mContext = context;
+        this.mBluetoothAdapter = bluetoothAdapter;
     }
 
     @Override
@@ -60,23 +68,40 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                 RxBleDevice rxDeviceBle = bleDevices.get(device);
 
                 Disposable observerConnectionDisposable = rxDeviceBle.observeConnectionStateChanges()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
-                        .subscribe(rxBleConnectionState -> Log.d(TAG, "state="+rxBleConnectionState.name()));
+                        .subscribe(rxBleConnectionState -> {
+                            Log.d(TAG, "state="+rxBleConnectionState.name());
+                        });
 
                 devicesDisposable.get(device).add(observerConnectionDisposable);
 
+                DisposableObserver<RxBleConnection> disposableObserver = new DisposableObserver<RxBleConnection>() {
+                    @Override
+                    public void onNext(RxBleConnection rxBleConnection) {
+                        devicesConnection.put(device, rxBleConnection);
+                        emitter.onComplete();
+                    }
 
-                    Disposable connectionEstablishmentDisposable = rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(Schedulers.io())
-                            .subscribe(rxBleConnection -> {
-                                devicesConnection.put(device, rxBleConnection);
-                                emitter.onComplete();
-                            }, emitter::onError, () -> {
-                            });
-                    devicesDisposable.get(device).add(connectionEstablishmentDisposable);
+                    @Override
+                    public void onError(Throwable e) {
+                        emitter.onError(e);
+                    }
 
+                    @Override
+                    public void onComplete() {
+                    }
+                };
+
+                isBonded(rxDeviceBle.getMacAddress())
+                        .flatMapCompletable(bonded -> {
+                            if(!createBond || bonded)
+                                return Completable.complete();
+                            else
+                                return createBond(rxDeviceBle.getBluetoothDevice());
+                        })
+                        .andThen(establishConnection(rxDeviceBle))
+                        .subscribe(disposableObserver);
+
+                devicesDisposable.get(device).add(disposableObserver);
             }
         });
     }
@@ -86,7 +111,8 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
         return Completable.create(emitter -> {
             if(devicesDisposable.containsKey(device))
                 devicesDisposable.get(device).clear();
-            devicesConnection.get(device);
+            RxBleConnection bleConnection =  devicesConnection.remove(device);
+            RxBleDevice bleDevice = bleDevices.remove(device);
             emitter.onComplete();
         });
     }
@@ -266,5 +292,36 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     private void dispose(Disposable disposable) {
         if(disposable!=null && !disposable.isDisposed())
             disposable.dispose();
+    }
+
+    private Completable createBond(BluetoothDevice device) {
+        return Completable.create(emitter -> {
+            mContext.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    BluetoothDevice extraDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                    int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
+                    switch (state) {
+                        case BluetoothDevice.BOND_BONDED:
+                            Log.d(TAG,"Bond succeeded");
+                            mContext.unregisterReceiver(this);
+                            emitter.onComplete();
+                            break;
+                        case BluetoothDevice.BOND_NONE:
+                            Log.d(TAG,"Bond failed!");
+                            mContext.unregisterReceiver(this);
+                            emitter.onError(new Exception("Bond failed"));
+                            break;
+                    }
+                }
+            }, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+            device.createBond();
+        });
+    }
+
+    private Observable<RxBleConnection> establishConnection(RxBleDevice rxDeviceBle) {
+        return rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io());
     }
 }
