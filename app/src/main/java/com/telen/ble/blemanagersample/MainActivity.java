@@ -7,20 +7,10 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.SeekBar;
-import android.widget.Toast;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 
-import com.telen.ble.manager.data.Device;
-import com.telen.ble.manager.devices.minger_p50.Minger_P50;
-
-import io.reactivex.CompletableObserver;
-import io.reactivex.Observer;
-import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import com.telen.ble.manager.model.DeviceInfo;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -28,18 +18,16 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 0;
     private static final String TAG = MainActivity.class.getSimpleName();
 
-    private Device mDevice;
-    private CompositeDisposable slideDisposable = new CompositeDisposable();
-    private int red;
-    private int green;
-    private int blue;
-    private int luminosity;
-
+    private RecyclerView mRecyclerView;
+    private DevicesBLEAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mRecyclerView = findViewById(R.id.device_list);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_DENIED ||
                 ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_DENIED ||
@@ -55,216 +43,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void permissionsGranted() {
-        final Minger_P50 minger_p50 = new Minger_P50(this);
-        //final SimulatorBLE simulator = new SimulatorBLE(this);
-        findViewById(R.id.connect).setOnClickListener(view -> minger_p50.connect()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<Device>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
+        // use this setting to improve performance if you know that changes
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
 
-                    }
+        // use a linear layout manager
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
-                    @Override
-                    public void onSuccess(Device device) {
-                        Log.d(TAG,"onSuccess device="+device);
-                        mDevice = device;
-                        Toast.makeText(MainActivity.this, "Successfully connected", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Log.e(TAG,"",e);
-                    }
-                }));
-
-        findViewById(R.id.disconnect).setOnClickListener(view ->
-                minger_p50.disconnect(mDevice)
-                        .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new CompletableObserver() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        Toast.makeText(MainActivity.this, "Successfully disconnected", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-                })
-        );
-
-        ((SeekBar)findViewById(R.id.red)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                int value = seekBar.getProgress();
-                minger_p50.apply(mDevice, value, green, blue, luminosity)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<String>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                slideDisposable.clear();
-                                slideDisposable.add(d);
-                            }
-
-                            @Override
-                            public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                red = value;
-                            }
-                        });
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
+        // specify an adapter (see also next example)
+        mAdapter = new DevicesBLEAdapter(new DeviceInfo[] {
+                DeviceInfo.MINGER
         });
-
-        ((SeekBar)findViewById(R.id.green)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                int value = seekBar.getProgress();
-                minger_p50.apply(mDevice, red, value, blue, luminosity)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<String>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                slideDisposable.clear();
-                                slideDisposable.add(d);
-                            }
-
-                            @Override
-                            public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                green = value;
-                            }
-                        });
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        ((SeekBar)findViewById(R.id.blue)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                int value = seekBar.getProgress();
-                minger_p50.apply(mDevice, red, green, value, luminosity)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<String>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                slideDisposable.clear();
-                                slideDisposable.add(d);
-                            }
-
-                            @Override
-                            public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                blue = value;
-                            }
-                        });
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
-
-        ((SeekBar)findViewById(R.id.luminosity)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                int value = seekBar.getProgress();
-                minger_p50.apply(mDevice, red, green, blue, value)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Observer<String>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                slideDisposable.clear();
-                                slideDisposable.add(d);
-                            }
-
-                            @Override
-                            public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                luminosity = value;
-                            }
-                        });
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
+        mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override

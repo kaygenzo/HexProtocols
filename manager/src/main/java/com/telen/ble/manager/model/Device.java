@@ -32,4 +32,12 @@ public class Device {
     public String getMacAddress() {
         return macAddress;
     }
+
+    @Override
+    public String toString() {
+        return "Device{" +
+                "name='" + name + '\'' +
+                ", macAddress='" + macAddress + '\'' +
+                '}';
+    }
 }

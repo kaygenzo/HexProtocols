@@ -25,6 +25,7 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -51,7 +52,7 @@ public class DataLayerImpl implements DataLayerInterface {
     public Single<Device> scan(String deviceName) {
         return Single.create(emitter -> hardwareInteractionLayer.scan(deviceName)
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(emitter::onSuccess, emitter::onError));
     }
 
@@ -60,7 +61,7 @@ public class DataLayerImpl implements DataLayerInterface {
         return Single.create(emitter ->
                 hardwareInteractionLayer.connect(device, createBond)
                         .subscribeOn(Schedulers.io())
-                        .observeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(() -> emitter.onSuccess(device), emitter::onError)
         );
     }

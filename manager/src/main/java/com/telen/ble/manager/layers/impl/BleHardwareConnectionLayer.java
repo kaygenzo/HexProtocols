@@ -31,6 +31,7 @@ import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableObserver;
@@ -83,7 +84,10 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
                     @Override
                     public void onError(Throwable e) {
-                        emitter.onError(e);
+                        if(!emitter.isDisposed())
+                            emitter.onError(e);
+                        else
+                            Log.e(TAG,"",e);
                     }
 
                     @Override
@@ -99,6 +103,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                                 return createBond(rxDeviceBle.getBluetoothDevice());
                         })
                         .andThen(establishConnection(rxDeviceBle))
+                        .retry(3)
                         .subscribe(disposableObserver);
 
                 devicesDisposable.get(device).add(disposableObserver);
@@ -112,7 +117,6 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
             if(devicesDisposable.containsKey(device))
                 devicesDisposable.get(device).clear();
             RxBleConnection bleConnection =  devicesConnection.remove(device);
-            RxBleDevice bleDevice = bleDevices.remove(device);
             emitter.onComplete();
         });
     }
@@ -211,7 +215,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
             rxBleClient.scanBleDevices(settings, filter)
                     .firstOrError()
                     .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new SingleObserver<ScanResult>() {
                         @Override
                         public void onSubscribe(Disposable d) {
@@ -253,7 +257,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                         return Completable.complete();
                     })
                     .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
                     .subscribe();
         });
     }
@@ -322,6 +326,6 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     private Observable<RxBleConnection> establishConnection(RxBleDevice rxDeviceBle) {
         return rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }

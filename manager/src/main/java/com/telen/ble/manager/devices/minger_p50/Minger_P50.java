@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
 public class Minger_P50 implements GenericDevice {
@@ -37,21 +38,21 @@ public class Minger_P50 implements GenericDevice {
     public Single<Device> scan() {
         return dataLayer.scan(deviceConfiguration.getDeviceNames()[0])
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
     public Single<Device> connect(Device device, boolean createBond) {
         return dataLayer.connect(device, createBond)
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     @Override
     public Completable disconnect(Device device) {
         return dataLayer.disconnect(device)
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
+                .observeOn(AndroidSchedulers.mainThread());
     }
 
     public Observable<String> apply(Device device, int red, int green, int blue, int value) {
@@ -63,6 +64,6 @@ public class Minger_P50 implements GenericDevice {
         data.put("LUMINOSITY_2",value);
         return dataLayer.sendCommand(device, deviceConfiguration.getCommand("CHANGE_COLOR"),data)
                 .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io());
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }
