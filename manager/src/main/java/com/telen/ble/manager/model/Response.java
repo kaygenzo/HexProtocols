@@ -49,4 +49,8 @@ public class Response {
     public String getEndFrame() {
         return endFrame;
     }
+
+    public void setEndFrame(String endFrame) {
+        this.endFrame = endFrame;
+    }
 }

@@ -5,13 +5,14 @@ import android.util.Log;
 import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.scan.ScanResult;
+import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.model.Command;
 import com.telen.ble.manager.model.Device;
 import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.model.Request;
 import com.telen.ble.manager.model.Response;
 import com.telen.ble.manager.exceptions.CommandTimeoutException;
-import com.telen.ble.manager.interfaces.HardwareLayerInterface;
+import com.telen.ble.manager.layers.HardwareLayerInterface;
 import com.telen.ble.manager.validator.DataValidator;
 
 import org.junit.AfterClass;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.plugins.RxAndroidPlugins;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -44,18 +46,17 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({UUID.class, Log.class})
-public class BleDataLayerTests {
+public class DataLayerTests {
 
-    private BleDataLayer datalayer;
+    private DataLayerImpl datalayer;
     @Mock HardwareLayerInterface hardwareLayer;
     @Mock DataValidator dataValidator;
-    @Mock RxBleDevice rxBleDevice;
-    @Mock RxBleConnection rxBleConnection;
-    @Mock ScanResult scanResult;
+    @Mock HexBuilder mockHexBuilder;
 
     private List<Payload> payloads;
     private Device expectedDevice;
     private Command command;
+    private TestObserver observer = new TestObserver();
 
     @BeforeClass
     public static void setupClass() {
@@ -73,7 +74,7 @@ public class BleDataLayerTests {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        datalayer = new BleDataLayer(hardwareLayer, dataValidator);
+        datalayer = new DataLayerImpl(hardwareLayer, dataValidator, mockHexBuilder);
         PowerMockito.mockStatic(Log.class);
 
         payloads = new ArrayList<>();
@@ -114,7 +115,7 @@ public class BleDataLayerTests {
         payload.setValue("bcdefghijklmnopqrstuvwxyz");
         payloads.add(payload);
 
-        expectedDevice = new Device("mydevice", "macaddress");
+        expectedDevice = new Device("mydevice", "@mac");
         command = new Command();
         command.setIdentifier("TEST_COMMAND");
         Request request = new Request();
@@ -124,91 +125,140 @@ public class BleDataLayerTests {
     }
 
     @Test
-    public void shouldBuildCommandFromPayloads() {
-
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("SUBROUTINE", 4294967295L);
-        data.put("RED", 125);
-        data.put("GREEN", 255);
-        data.put("BLUE", 125);
-
-        TestObserver<String> observer = new TestObserver<>();
-        datalayer.buildHexaCommand(payloads, data)
-                .subscribe(observer);
-        observer.awaitTerminalEvent();
-        observer.assertComplete();
-        assertEquals(observer.values().get(0),"ffffffff7dff7d0bcdefghijklmnopqrstuvwxyz");
-    }
-
-    @Test
     public void shouldConnectSuccessfully() {
-        String deviceName = "mydevice";
-        when(hardwareLayer.scan(deviceName)).thenReturn(Observable.just(scanResult));
-        when(scanResult.getBleDevice()).thenReturn(rxBleDevice);
-        when(rxBleDevice.getMacAddress()).thenReturn("macaddress");
-        when(hardwareLayer.connect(rxBleDevice)).thenReturn(Single.just(rxBleConnection));
-        TestObserver observer = new TestObserver();
-        datalayer.connect(deviceName).subscribe(observer);
+        boolean createBonding = false;
+        when(hardwareLayer.connect(expectedDevice, createBonding)).thenReturn(Completable.complete());
+        datalayer.connect(expectedDevice, createBonding).subscribe(observer);
         observer.awaitTerminalEvent();
-        observer.onComplete();
+        observer.assertComplete();
         observer.assertValueCount(1);
 
-        Device expectedDevice = new Device(deviceName, "macaddress");
-
-        assertEquals(observer.values().get(0), expectedDevice);
+        assertEquals(expectedDevice, observer.values().get(0));
     }
 
     @Test
-    public void shouldNotConnectIfNoDeviceFound() {
-        String deviceName = "mydevice";
-        when(hardwareLayer.scan(deviceName)).thenReturn(Observable.just(scanResult));
-        when(scanResult.getBleDevice()).thenReturn(rxBleDevice);
-        when(rxBleDevice.getMacAddress()).thenReturn("macaddress");
-        when(hardwareLayer.connect(rxBleDevice)).thenReturn(Single.just(rxBleConnection));
-        TestObserver observer = new TestObserver();
-        datalayer.connect(deviceName).subscribe(observer);
+    public void shouldBondSuccessfully() {
+        boolean createBonding = true;
+        when(hardwareLayer.connect(expectedDevice, createBonding)).thenReturn(Completable.complete());
+        datalayer.connect(expectedDevice, createBonding).subscribe(observer);
         observer.awaitTerminalEvent();
-        observer.onComplete();
+        observer.assertComplete();
         observer.assertValueCount(1);
 
-        Device expectedDevice = new Device(deviceName, "macaddress");
-
-        assertEquals(observer.values().get(0), expectedDevice);
+        assertEquals(expectedDevice, observer.values().get(0));
     }
 
     @Test
-    public void shouldSendCommandSuccessfullyWithoutWaitForResponses() {
-        TestObserver<String> observer = new TestObserver<>();
-        sendCommand(-1, false).subscribe(observer);
+    public void shouldScanSuccessfully() {
+        when(hardwareLayer.scanOld(expectedDevice.getName())).thenReturn(Single.just(expectedDevice));
+        when(hardwareLayer.scan(expectedDevice.getName())).thenReturn(Single.just(expectedDevice));
+        datalayer.scan(expectedDevice.getName()).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        observer.assertValueCount(1);
+
+        assertEquals(expectedDevice, observer.values().get(0));
+    }
+
+    @Test
+    public void shouldDisconnectSuccessfully() {
+        when(hardwareLayer.disconnect(expectedDevice)).thenReturn(Completable.complete());
+        datalayer.disconnect(expectedDevice).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
     }
 
     @Test
-    public void shouldSendCommandSuccessfullyAndWaitForResponses() {
-        TestObserver<String> observer = new TestObserver<>();
-        sendCommand(-1, true).subscribe(observer);
+    public void shouldGetPositiveBondedStatus() {
+        when(hardwareLayer.isBonded(expectedDevice.getMacAddress())).thenReturn(Single.just(Boolean.TRUE));
+        datalayer.isBonded(expectedDevice).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
-        observer.assertValueCount(3);
-        assertArrayEquals(observer.values().toArray(), new String[]{
+        observer.assertValueCount(1);
+        assertTrue((Boolean)observer.values().get(0));
+    }
+
+    @Test
+    public void shouldGetNegativeBondedStatus() {
+        when(hardwareLayer.isBonded(expectedDevice.getMacAddress())).thenReturn(Single.just(Boolean.FALSE));
+        datalayer.isBonded(expectedDevice).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        observer.assertValueCount(1);
+        assertFalse((Boolean)observer.values().get(0));
+    }
+
+    @Test
+    public void shouldNotSendCommandWithoutDataValidated() {
+        Map<String, Object> data = new HashMap<>();
+        Exception e = new Exception("Fake exception");
+        when(dataValidator.validateData(payloads, data)).thenReturn(Completable.error(e));
+        when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
+        datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(e);
+    }
+
+    @Test
+    public void shouldNotSendCommandWithHexBuildingFailed() {
+        Map<String, Object> data = new HashMap<>();
+        Exception e = new Exception("Fake exception");
+        when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
+        when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.error(e));
+        datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(e);
+    }
+
+    @Test
+    public void shouldNotSendCommandWhenErrorTriggeredInHWLayer() {
+        Map<String, Object> data = new HashMap<>();
+        datalayer.setTimeout(-1);
+        when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
+        when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
+        UUID uuid = UUID.fromString("00007777-0000-1000-8000-00805f9b34fb");
+        Exception e = new Exception("Fake exception");
+        when(hardwareLayer.sendCommand(expectedDevice, uuid, "hexString")).thenReturn(Single.error(e));
+        datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(e);
+    }
+
+    @Test
+    public void shouldSendCommandAndNotWaitForResponse() {
+        sendCommand(-1, false, false).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldSendCommandAndWaitForResponse_WithoutEndOfFrame() {
+        //TODO make better test here to test timeout
+        sendCommand(100, true, false).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(CommandTimeoutException.class);
+    }
+
+    @Test
+    public void shouldSendCommandAndWaitForResponse_WithEndOfFrame() {
+        sendCommand(-1, true, true).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        observer.assertResult(
                 "01000000000000000000000000000000000000",
                 "02000000000000000000000000000000000000",
-                "03000000000000000000000000000000000000"
-        });
+                "03000000000000000000000000000000000000",
+                "ffffffff");
     }
 
     @Test
     public void shouldNotSendCommandWhenTimeoutTriggered() {
-        TestObserver<String> observer = new TestObserver<>();
-        sendCommand(100, false).subscribe(observer);
+        sendCommand(100, false, false).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(CommandTimeoutException.class);
-
     }
 
-    private Observable<String> sendCommand(long timeout, boolean listenResponse) {
+    private Observable<String> sendCommand(long timeout, boolean listenResponse, boolean endOfFrame) {
         Map<String, Object> data = new HashMap<>();
         data.put("SUBROUTINE", 5L);
         data.put("RED", 0);
@@ -226,127 +276,34 @@ public class BleDataLayerTests {
             responsePayloads.add(payload);
 
             Response response = new Response();
+            if(endOfFrame)
+                response.setEndFrame("ffffffff");
             response.setCharacteristic("00008888-0000-1000-8000-00805f9b34fb");
             response.setPayloads(responsePayloads);
             command.setResponse(response);
             when(dataValidator.validateData(any(List.class), any(String.class))).thenReturn(Completable.complete());
         }
 
-        datalayer.getRxConnections().put(expectedDevice, rxBleConnection);
+
         UUID requestUuid = UUID.fromString(command.getRequest().getCharacteristic());
         UUID responseUuid = UUID.fromString("00008888-0000-1000-8000-00805f9b34fb");
         PowerMockito.mockStatic(UUID.class);
         when(UUID.fromString(command.getRequest().getCharacteristic())).thenReturn(requestUuid);
+
         when(dataValidator.validateData(payloads,data)).thenReturn(Completable.complete());
-        when(hardwareLayer.sendCommand(any(RxBleConnection.class), any(UUID.class), any(String.class))).thenReturn(Single.just("05000000000000000000000000000000000000"));
-        when(hardwareLayer.listenResponses(rxBleConnection, responseUuid)).thenReturn(Observable.fromArray(
-                "01000000000000000000000000000000000000",
-                "02000000000000000000000000000000000000",
-                "03000000000000000000000000000000000000"
+        when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
+        when(hardwareLayer.sendCommand(expectedDevice, requestUuid, "hexString")).thenReturn(Single.just("05000000000000000000000000000000000000"));
+        when(hardwareLayer.listenResponses(expectedDevice, responseUuid)).thenReturn(Observable.create(emitter -> {
+                    emitter.onNext("01000000000000000000000000000000000000");
+                    emitter.onNext("02000000000000000000000000000000000000");
+                    emitter.onNext("03000000000000000000000000000000000000");
+                    if(endOfFrame){
+                        emitter.onNext("ffffffff");
+                    }
+                }
         ));
 
         datalayer.setTimeout(timeout);
         return datalayer.sendCommand(expectedDevice, command, data);
-    }
-
-    @Test
-    public void shouldCleanMemoryAfterMultiConnection() {
-        String deviceName = "mydevice";
-        when(hardwareLayer.scan(deviceName)).thenReturn(Observable.just(scanResult));
-        when(scanResult.getBleDevice()).thenReturn(rxBleDevice);
-        when(rxBleDevice.getMacAddress()).thenReturn("macaddress");
-        when(hardwareLayer.connect(rxBleDevice)).thenReturn(Single.just(rxBleConnection));
-        TestObserver observer = new TestObserver();
-        datalayer.connect(deviceName)
-                .flatMap(device -> datalayer.connect(deviceName))
-                .flatMap(device -> datalayer.connect(deviceName))
-                .flatMap(device -> datalayer.connect(deviceName))
-                .flatMap(device -> datalayer.connect(deviceName))
-                .subscribe(observer);
-        observer.awaitTerminalEvent();
-        observer.onComplete();
-        assertEquals(datalayer.getDevices().size(), 1);
-        assertEquals(datalayer.getRxConnections().size(), 1);
-        assertEquals(datalayer.getDevicesDisposable().size(), 1);
-    }
-
-    @Test
-    public void shouldLaunchCommandSuccessfullyStartingByHex() {
-        payloads.clear();
-        Payload payload = new Payload();
-        payload.setName("PREFIX");
-        payload.setType("HEX");
-        payload.setStart(0);
-        payload.setEnd(7);
-        payload.setValue("01fe000053831000");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("GREEN");
-        payload.setType("INTEGER");
-        payload.setStart(8);
-        payload.setEnd(8);
-        payload.setValue("0");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("BLUE");
-        payload.setType("INTEGER");
-        payload.setStart(9);
-        payload.setEnd(9);
-        payload.setValue("0");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("RED");
-        payload.setType("INTEGER");
-        payload.setStart(10);
-        payload.setEnd(10);
-        payload.setValue("255");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("UNKNOWN");
-        payload.setType("HEX");
-        payload.setStart(11);
-        payload.setEnd(12);
-        payload.setValue("0050");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("LUMINOSITY_1");
-        payload.setType("INTEGER");
-        payload.setStart(13);
-        payload.setEnd(13);
-        payload.setValue("2");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("LUMINOSITY_1");
-        payload.setType("INTEGER");
-        payload.setStart(14);
-        payload.setEnd(14);
-        payload.setValue("2");
-        payloads.add(payload);
-
-        payload = new Payload();
-        payload.setName("SUFFIX");
-        payload.setType("HEX");
-        payload.setStart(15);
-        payload.setEnd(15);
-        payload.setValue("00");
-        payloads.add(payload);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("RED", 255);
-        data.put("GREEN", 0);
-        data.put("BLUE", 0);
-
-        TestObserver<String> observer = new TestObserver<>();
-        datalayer.buildHexaCommand(payloads, data)
-                .subscribe(observer);
-        observer.awaitTerminalEvent();
-        observer.assertComplete();
-        assertEquals("01fe0000538310000000FF005002020000000000".toLowerCase(), observer.values().get(0).toLowerCase());
     }
 }

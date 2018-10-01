@@ -1,6 +1,6 @@
 package com.telen.ble.manager;
 
-import com.telen.ble.manager.data.Payload;
+import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.InvalidPayloadLengthException;
 import com.telen.ble.manager.exceptions.InvalidPayloadValueException;
 import com.telen.ble.manager.validator.DataValidator;

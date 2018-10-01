@@ -59,7 +59,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     @Override
     public Completable connect(Device device, boolean createBond) {
         return Completable.create(emitter -> {
-            if(device==null || !bleDevices.containsKey(device))
+            if(device==null)
                 emitter.onError(new IllegalArgumentException("Cannot connect to a null device"));
             else {
                 if(!devicesDisposable.containsKey(device))
@@ -67,6 +67,10 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                 devicesDisposable.get(device).clear();
 
                 RxBleDevice rxDeviceBle = bleDevices.get(device);
+                if(rxDeviceBle==null) {
+                    rxDeviceBle = rxBleClient.getBleDevice(device.getMacAddress());
+                    bleDevices.put(device, rxDeviceBle);
+                }
 
                 Disposable observerConnectionDisposable = rxDeviceBle.observeConnectionStateChanges()
                         .subscribe(rxBleConnectionState -> {
@@ -95,12 +99,13 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                     }
                 };
 
+                RxBleDevice finalRxDeviceBle = rxDeviceBle;
                 isBonded(rxDeviceBle.getMacAddress())
                         .flatMapCompletable(bonded -> {
                             if(!createBond || bonded)
                                 return Completable.complete();
                             else
-                                return createBond(rxDeviceBle.getBluetoothDevice());
+                                return createBond(finalRxDeviceBle.getBluetoothDevice());
                         })
                         .andThen(establishConnection(rxDeviceBle))
                         .retry(3)
@@ -327,5 +332,17 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
         return rxDeviceBle.establishConnection(false, new Timeout(30000, TimeUnit.MILLISECONDS))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Map<Device, CompositeDisposable> getDevicesDisposable() {
+        return devicesDisposable;
+    }
+
+    public Map<Device, RxBleConnection> getDevicesConnection() {
+        return devicesConnection;
+    }
+
+    public Map<Device, RxBleDevice> getBleDevices() {
+        return bleDevices;
     }
 }

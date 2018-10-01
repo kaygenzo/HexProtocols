@@ -1,21 +1,15 @@
 package com.telen.ble.manager.layers.impl;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RestrictTo;
 import android.util.Log;
 
 import com.telen.ble.manager.HexBuilder;
 import com.telen.ble.manager.model.Command;
 import com.telen.ble.manager.model.Device;
-import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.CommandTimeoutException;
 import com.telen.ble.manager.layers.DataLayerInterface;
 import com.telen.ble.manager.layers.HardwareLayerInterface;
 import com.telen.ble.manager.validator.DataValidator;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -104,6 +98,7 @@ public class DataLayerImpl implements DataLayerInterface {
                                             String endFrame = command.getResponse().getEndFrame();
                                             if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
                                                 dataListenerDisposable.clear();
+                                                stopTimeout();
                                                 emitter.onComplete();
                                             }
                                         }
@@ -129,9 +124,9 @@ public class DataLayerImpl implements DataLayerInterface {
 
                         @Override
                         public void onSuccess(String responseFrame) {
-                            stopTimeout();
                             Log.d(TAG,"Sent -- responseFrame="+responseFrame);
                             if(command.getResponse()==null) {
+                                stopTimeout();
                                 Log.d(TAG,"Don't need to wait for any response, bye bye!");
                                 emitter.onComplete();
                             }
