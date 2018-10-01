@@ -1,7 +1,6 @@
 package com.telen.ble.blemanagersample;
 
 import android.content.Context;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
 import android.util.Log;

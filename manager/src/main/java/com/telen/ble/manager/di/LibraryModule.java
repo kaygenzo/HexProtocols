@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
+import com.telen.ble.manager.HexBuilder;
 import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.layers.impl.BleHardwareConnectionLayer;
 import com.telen.ble.manager.layers.HardwareLayerInterface;
@@ -26,8 +27,8 @@ public class LibraryModule {
 
     @Singleton
     @Provides
-    public DataLayerImpl provideDataLayer(HardwareLayerInterface hardwareLayer, DataValidator dataValidator) {
-        return new DataLayerImpl(hardwareLayer, dataValidator);
+    public DataLayerImpl provideDataLayer(HardwareLayerInterface hardwareLayer, DataValidator dataValidator, HexBuilder hexBuilder) {
+        return new DataLayerImpl(hardwareLayer, dataValidator, hexBuilder);
     }
 
     @Singleton
@@ -62,5 +63,11 @@ public class LibraryModule {
             return manager.getAdapter();
         else
             return null;
+    }
+
+    @Provides
+    @Singleton
+    public HexBuilder provideHexBuilder() {
+        return new HexBuilder();
     }
 }

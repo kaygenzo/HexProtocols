@@ -66,4 +66,28 @@ public class Minger_P50 implements GenericDevice {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
+
+    public Observable<String> lighOn(Device device) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("RED",0);
+        data.put("GREEN",0);
+        data.put("BLUE",0);
+        data.put("LUMINOSITY_1",255);
+        data.put("LUMINOSITY_2",255);
+        return dataLayer.sendCommand(device, deviceConfiguration.getCommand("CHANGE_COLOR"),data)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    public Observable<String> lighOff(Device device) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("RED",0);
+        data.put("GREEN",0);
+        data.put("BLUE",0);
+        data.put("LUMINOSITY_1",0);
+        data.put("LUMINOSITY_2",0);
+        return dataLayer.sendCommand(device, deviceConfiguration.getCommand("CHANGE_COLOR"),data)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
 }
