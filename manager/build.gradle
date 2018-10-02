@@ -15,7 +15,7 @@ android {
 
     buildTypes {
         debug {
-            testCoverageEnabled = true
+            //testCoverageEnabled = true
         }
         release {
             minifyEnabled false
@@ -53,4 +53,4 @@ dependencies {
     annotationProcessor 'com.google.dagger:dagger-compiler:2.16'
 }
 
-apply from: 'jacoco.gradle'
+//apply from: 'jacoco.gradle'
