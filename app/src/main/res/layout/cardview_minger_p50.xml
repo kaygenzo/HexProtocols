@@ -30,7 +30,7 @@
             android:id="@+id/scan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Scan"
+            android:text="@string/button_title_scan"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@+id/connect"
             app:layout_constraintTop_toBottomOf="@+id/information"/>
@@ -39,7 +39,7 @@
             android:id="@+id/connect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Connect"
+            android:text="@string/button_title_connect"
             app:layout_constraintLeft_toRightOf="@+id/scan"
             app:layout_constraintRight_toLeftOf="@+id/bond"
             app:layout_constraintTop_toTopOf="@+id/scan"/>
@@ -48,7 +48,7 @@
             android:id="@+id/bond"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bond"
+            android:text="@string/button_title_bond"
             app:layout_constraintLeft_toRightOf="@+id/connect"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="@+id/scan"/>
@@ -57,7 +57,7 @@
             android:id="@+id/disconnect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Disconnect"
+            android:text="@string/button_title_disconnect"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/connect"/>

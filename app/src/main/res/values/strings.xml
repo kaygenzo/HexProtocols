@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">BLEManagerSample</string>
+    <string name="button_title_scan">Scan</string>
+    <string name="button_title_connect">Connect</string>
+    <string name="button_title_bond">Bond</string>
+    <string name="button_title_disconnect">Disconnect</string>
 </resources>
