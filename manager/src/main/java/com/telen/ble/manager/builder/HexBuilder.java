@@ -1,4 +1,4 @@
-package com.telen.ble.manager;
+package com.telen.ble.manager.builder;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
