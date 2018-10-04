@@ -312,12 +312,12 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                     int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE);
                     switch (state) {
                         case BluetoothDevice.BOND_BONDED:
-                            Log.d(TAG,"Bond succeeded");
+                           // Log.d(TAG,"Bond succeeded");
                             mContext.unregisterReceiver(this);
                             emitter.onComplete();
                             break;
                         case BluetoothDevice.BOND_NONE:
-                            Log.d(TAG,"Bond failed!");
+                           // Log.d(TAG,"Bond failed!");
                             mContext.unregisterReceiver(this);
                             emitter.onError(new Exception("Bond failed"));
                             break;

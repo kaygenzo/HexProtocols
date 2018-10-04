@@ -47,15 +47,29 @@ public class HardwareLayerTests {
     @Mock RxBleDevice mockrxBleDevice;
     @Mock RxBleConnection mockBleConnection;
     @Mock BluetoothDevice mockBluetoothDevice;
+    @Mock Intent intent;
 
-    private MockContext mockContext;
+    private MockedContext mockContext;
     private Device device;
     private TestObserver observer = new TestObserver();
 
     private class MockedContext extends MockContext {
+
+        private BroadcastReceiver receiver;
+
+        public BroadcastReceiver getReceiver() {
+            return receiver;
+        }
+
         @Override
         public Intent registerReceiver(BroadcastReceiver receiver, IntentFilter filter) {
-            return super.registerReceiver(receiver, filter);
+            this.receiver = receiver;
+            return new Intent();
+        }
+
+        @Override
+        public void unregisterReceiver(BroadcastReceiver receiver) {
+            this.receiver = null;
         }
     }
 
@@ -74,6 +88,7 @@ public class HardwareLayerTests {
 
     @Before
     public void setup() {
+        mockContext = new MockedContext();
         hardwareConnectionLayer = new BleHardwareConnectionLayer(mockRxBleClient, mockBluetoothAdapter, mockContext);
         device = new Device("mydevice", "mac@");
     }
@@ -127,25 +142,58 @@ public class HardwareLayerTests {
         Assert.assertEquals(hardwareConnectionLayer.getDevicesDisposable().size(), 1);
     }
 
-//    @Test
-//    public void shouldCleanMemoryAfterMultiConnection_bond() {
-//        when(mockRxBleClient.getBleDevice(device.getMacAddress())).thenReturn(mockrxBleDevice);
-//        when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());
-//        when(mockrxBleDevice.observeConnectionStateChanges()).thenReturn(Observable.empty());
-//        when(mockrxBleDevice.establishConnection(any(Boolean.class), any(Timeout.class))).thenReturn(Observable.just(mockBleConnection));
-//        doNothing().when(mockrxBleDevice.getBluetoothDevice());
-//
-//        when(mockContext.registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class)))
-//        hardwareConnectionLayer.connect(device, true)
-//                .andThen(hardwareConnectionLayer.connect(device, true))
-//                .andThen(hardwareConnectionLayer.connect(device, true))
-//                .andThen(hardwareConnectionLayer.connect(device, true))
-//                .andThen(hardwareConnectionLayer.connect(device, true))
-//                .subscribe(observer);
-//        observer.awaitTerminalEvent();
-//        observer.assertComplete();
-//        Assert.assertEquals(hardwareConnectionLayer.getBleDevices().size(), 1);
-//        Assert.assertEquals(hardwareConnectionLayer.getDevicesConnection().size(), 1);
-//        Assert.assertEquals(hardwareConnectionLayer.getDevicesDisposable().size(), 1);
-//    }
+    @Test
+    public void shouldCleanMemoryAfterMultiConnection_bond_success() {
+        when(mockRxBleClient.getBleDevice(device.getMacAddress())).thenReturn(mockrxBleDevice);
+        when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());
+        when(mockrxBleDevice.observeConnectionStateChanges()).thenReturn(Observable.empty());
+        when(mockrxBleDevice.establishConnection(any(Boolean.class), any(Timeout.class))).thenReturn(Observable.just(mockBleConnection));
+        when(mockBluetoothDevice.getAddress()).thenReturn(device.getMacAddress());
+        when(mockBluetoothAdapter.getBondedDevices()).thenReturn(new HashSet<>());
+        when(mockrxBleDevice.getBluetoothDevice()).thenReturn(mockBluetoothDevice);
+
+        when(intent.getIntExtra(any(String.class), any(Integer.class))).thenReturn(BluetoothDevice.BOND_BONDED);
+
+        doAnswer(invocation -> {
+            mockContext.getReceiver().onReceive(mockContext, intent);
+            return null;
+        }).when(mockBluetoothDevice).createBond();
+        hardwareConnectionLayer.connect(device, true)
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        Assert.assertEquals(hardwareConnectionLayer.getBleDevices().size(), 1);
+        Assert.assertEquals(hardwareConnectionLayer.getDevicesConnection().size(), 1);
+        Assert.assertEquals(hardwareConnectionLayer.getDevicesDisposable().size(), 1);
+    }
+
+    @Test
+    public void shouldCleanMemoryAfterMultiConnection_bond_failed() {
+        when(mockRxBleClient.getBleDevice(device.getMacAddress())).thenReturn(mockrxBleDevice);
+        when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());
+        when(mockrxBleDevice.observeConnectionStateChanges()).thenReturn(Observable.empty());
+        when(mockrxBleDevice.establishConnection(any(Boolean.class), any(Timeout.class))).thenReturn(Observable.just(mockBleConnection));
+        when(mockBluetoothDevice.getAddress()).thenReturn(device.getMacAddress());
+        when(mockBluetoothAdapter.getBondedDevices()).thenReturn(new HashSet<>());
+        when(mockrxBleDevice.getBluetoothDevice()).thenReturn(mockBluetoothDevice);
+
+        when(intent.getIntExtra(any(String.class), any(Integer.class))).thenReturn(BluetoothDevice.BOND_NONE);
+
+        doAnswer(invocation -> {
+            mockContext.getReceiver().onReceive(mockContext, intent);
+            return null;
+        }).when(mockBluetoothDevice).createBond();
+        hardwareConnectionLayer.connect(device, true)
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .andThen(hardwareConnectionLayer.connect(device, true))
+                .subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(Exception.class);
+    }
 }
