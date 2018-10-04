@@ -86,16 +86,6 @@ public class HardwareLayerTests {
     }
 
     @Test
-    public void shouldNot() {
-
-    }
-
-    @Test
-    public void should() {
-
-    }
-
-    @Test
     public void shouldCleanMemoryAfterMultiConnection_connect() {
         when(mockRxBleClient.getBleDevice(device.getMacAddress())).thenReturn(mockrxBleDevice);
         when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());

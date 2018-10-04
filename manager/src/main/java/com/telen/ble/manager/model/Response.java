@@ -22,6 +22,14 @@ public class Response {
     @Expose
     private List<Payload> payloads;
 
+    @SerializedName("complete_on_timeout")
+    @Expose
+    private boolean completeOnTimeout;
+
+    @SerializedName("timeout")
+    @Expose
+    private long timeout;
+
     public String getService() {
         return service;
     }
@@ -52,5 +60,21 @@ public class Response {
 
     public void setEndFrame(String endFrame) {
         this.endFrame = endFrame;
+    }
+
+    public boolean isCompleteOnTimeout() {
+        return completeOnTimeout;
+    }
+
+    public void setCompleteOnTimeout(boolean completeOnTimeout) {
+        this.completeOnTimeout = completeOnTimeout;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
     }
 }

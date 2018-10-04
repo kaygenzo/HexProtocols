@@ -2,9 +2,7 @@ package com.telen.ble.manager;
 
 import android.util.Log;
 
-import com.polidea.rxandroidble2.RxBleConnection;
-import com.polidea.rxandroidble2.RxBleDevice;
-import com.polidea.rxandroidble2.scan.ScanResult;
+import com.telen.ble.manager.builder.HexBuilder;
 import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.model.Command;
 import com.telen.ble.manager.model.Device;
@@ -35,7 +33,6 @@ import java.util.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.plugins.RxAndroidPlugins;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -51,7 +48,8 @@ public class DataLayerTests {
     private DataLayerImpl datalayer;
     @Mock HardwareLayerInterface hardwareLayer;
     @Mock DataValidator dataValidator;
-    @Mock HexBuilder mockHexBuilder;
+    @Mock
+    HexBuilder mockHexBuilder;
 
     private List<Payload> payloads;
     private Device expectedDevice;
@@ -213,7 +211,7 @@ public class DataLayerTests {
     @Test
     public void shouldNotSendCommandWhenErrorTriggeredInHWLayer() {
         Map<String, Object> data = new HashMap<>();
-        datalayer.setTimeout(-1);
+        datalayer.setRequestTimeout(-1);
         when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
         when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
         UUID uuid = UUID.fromString("00007777-0000-1000-8000-00805f9b34fb");
@@ -232,16 +230,24 @@ public class DataLayerTests {
     }
 
     @Test
-    public void shouldSendCommandAndWaitForResponse_WithoutEndOfFrame() {
+    public void shouldSendCommandAndWaitForResponse_WithoutEndOfFrame_completeOnTimeout_true() {
         //TODO make better test here to test timeout
-        sendCommand(100, true, false).subscribe(observer);
+        sendCommand(-1, 1, true, false, true).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldSendCommandAndWaitForResponse_WithoutEndOfFrame_completeOnTimeout_false() {
+        //TODO make better test here to test timeout
+        sendCommand(-1, 1, true, false, false).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(CommandTimeoutException.class);
     }
 
     @Test
     public void shouldSendCommandAndWaitForResponse_WithEndOfFrame() {
-        sendCommand(-1, true, true).subscribe(observer);
+        sendCommand(-1, -1, true, true, false).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         observer.assertResult(
@@ -259,6 +265,10 @@ public class DataLayerTests {
     }
 
     private Observable<String> sendCommand(long timeout, boolean listenResponse, boolean endOfFrame) {
+        return sendCommand(timeout, -1, listenResponse, endOfFrame, false);
+    }
+
+    private Observable<String> sendCommand(long requestTimeout, long responseTimeout, boolean listenResponse, boolean endOfFrame, boolean completeOnTimeout) {
         Map<String, Object> data = new HashMap<>();
         data.put("SUBROUTINE", 5L);
         data.put("RED", 0);
@@ -280,7 +290,10 @@ public class DataLayerTests {
                 response.setEndFrame("ffffffff");
             response.setCharacteristic("00008888-0000-1000-8000-00805f9b34fb");
             response.setPayloads(responsePayloads);
+            if(completeOnTimeout)
+                response.setCompleteOnTimeout(completeOnTimeout);
             command.setResponse(response);
+            datalayer.setResponseTimeout(responseTimeout);
             when(dataValidator.validateData(any(List.class), any(String.class))).thenReturn(Completable.complete());
         }
 
@@ -303,7 +316,7 @@ public class DataLayerTests {
                 }
         ));
 
-        datalayer.setTimeout(timeout);
+        datalayer.setRequestTimeout(requestTimeout);
         return datalayer.sendCommand(expectedDevice, command, data);
     }
 }

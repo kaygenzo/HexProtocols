@@ -1,5 +1,6 @@
 package com.telen.ble.manager;
 
+import com.telen.ble.manager.builder.HexBuilder;
 import com.telen.ble.manager.model.Payload;
 
 import org.junit.AfterClass;
@@ -24,7 +25,8 @@ import io.reactivex.schedulers.Schedulers;
 @RunWith(MockitoJUnitRunner.class)
 public class HexBuilderTests {
 
-    @Mock HexBuilder hexBuilder;
+    @Mock
+    HexBuilder hexBuilder;
     private TestObserver observer = new TestObserver();
     private List<Payload> payloads;
 

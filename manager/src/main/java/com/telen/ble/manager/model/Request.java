@@ -22,6 +22,10 @@ public class Request {
     @Expose
     private int length;
 
+    @SerializedName("timeout")
+    @Expose
+    private long timeout;
+
     public String getService() {
         return service;
     }
@@ -48,5 +52,13 @@ public class Request {
 
     public void setLength(int length) {
         this.length = length;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(long timeout) {
+        this.timeout = timeout;
     }
 }

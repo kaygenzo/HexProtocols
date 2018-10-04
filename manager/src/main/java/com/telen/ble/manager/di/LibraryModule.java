@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
-import com.telen.ble.manager.HexBuilder;
+import com.telen.ble.manager.builder.HexBuilder;
 import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.layers.impl.BleHardwareConnectionLayer;
 import com.telen.ble.manager.layers.HardwareLayerInterface;
