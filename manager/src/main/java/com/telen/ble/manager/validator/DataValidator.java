@@ -2,11 +2,13 @@ package com.telen.ble.manager.validator;
 
 import android.util.Log;
 
+import com.telen.ble.manager.model.Directions;
 import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.InvalidPayloadLengthException;
 import com.telen.ble.manager.exceptions.InvalidPayloadValueException;
 import com.telen.ble.manager.exceptions.PayloadOutOfBoundsException;
 import com.telen.ble.manager.model.PayloadType;
+import com.telen.ble.manager.utils.BytesUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -94,25 +96,73 @@ public class DataValidator {
             }
 
             for (Payload payload: payloads) {
-                int start = payload.getStart()*2;
-                int end = (payload.getEnd()+1)*2;
+                int start = payload.getStart();
+                int end = payload.getEnd();
 
-                if(start > hexString.length() || end > hexString.length())
-                    emitter.onError(new PayloadOutOfBoundsException("start: "+start+" end: "+end+" but hexString length is "+hexString.length()));
+                StringBuilder payloadExtract = new StringBuilder();
+                payloadExtract.append(hexString, start*2, 2*(end+1));
+                String payloadTypeString = payload.getType();
 
-                String subHexString = hexString.substring(start, end);
+                Directions direction = Directions.LTR;
+                try {
+                    if(payload.getDirection()!=null)
+                        direction = Directions.valueOf(payload.getDirection().toUpperCase());
+                }
+                catch (IllegalArgumentException e) {
+                    Log.e(TAG,"",e);
+                }
 
-//                switch (payload.getType()) {
-//                    case "HEX":
-//                        //TODO ?
-//                        break;
-//                    case "INTEGER":
-//                        Integer value = Integer.parseInt(subHexString, 16);
-//                    case "LONG":
-//                    default:
-//                }
-                emitter.onComplete();
+                String extractHex = payloadExtract.toString();
+                if(direction==Directions.RTL)
+                    extractHex = BytesUtils.reverseBytes(extractHex);
+
+                int bytesLength = end - start + 1;
+
+//                Log.d(TAG,identifier+"->"+extractHex);
+
+                try {
+                    PayloadType payloadType = PayloadType.valueOf(payloadTypeString);
+                    switch (payloadType) {
+                        case HEX_STRING:
+                            String obj = extractHex;
+                            if (obj.length() > bytesLength * 2)
+                                emitter.onError(new InvalidPayloadLengthException("Invalid payload size: expect " + bytesLength + " bytes but string is length " + obj.length()));
+                            break;
+                        case INTEGER:
+                            Integer integer = Integer.parseInt(extractHex, 16);
+                            if (integer > Integer.parseInt(payload.getMax()) || integer < Integer.parseInt(payload.getMin())) {
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect integer between " + payload.getMin() + " and " + payload.getMax()
+                                        + " but value is " + integer));
+                                return;
+                            }
+                            break;
+                        case LONG:
+                            Long longValue = Long.parseLong(extractHex, 16);
+                            if (longValue > Long.parseLong(payload.getMax()) || longValue < Long.parseLong(payload.getMin())) {
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect long between " + payload.getMin() + " and " + payload.getMax()
+                                        + " but value is " + longValue));
+                                return;
+                            }
+                            break;
+                        case HEX:
+                            longValue = Long.parseLong(extractHex, 16);
+                            Long hexMin = Long.decode(payload.getMin());
+                            Long hexMax = Long.decode(payload.getMax());
+                            if (longValue > hexMax || longValue < hexMin) {
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect hex between " + payload.getMin() + " and " + payload.getMax()
+                                        + " but value is " + longValue));
+                                return;
+                            }
+                            break;
+                        default:
+                            Log.d(TAG, "Not managed type "+payloadType+" yet");
+                    }
+                }
+                catch (IllegalArgumentException e) {
+                    emitter.onError(e);
+                }
             }
+            emitter.onComplete();
         });
     }
 }

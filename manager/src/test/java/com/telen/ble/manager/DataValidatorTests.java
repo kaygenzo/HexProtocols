@@ -1,5 +1,6 @@
 package com.telen.ble.manager;
 
+import com.telen.ble.manager.exceptions.PayloadOutOfBoundsException;
 import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.InvalidPayloadLengthException;
 import com.telen.ble.manager.exceptions.InvalidPayloadValueException;
@@ -202,6 +203,156 @@ public class DataValidatorTests {
 
         TestObserver<String> observer = new TestObserver<>();
         dataValidator.validateData(payloads, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidPayloadValueException.class);
+    }
+
+    @Test
+    public void shouldValidateResponseFrame() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setType(PayloadType.HEX_STRING.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setValue("3F3E");
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_2");
+        payload.setType(PayloadType.INTEGER.name());
+        payload.setDirection("rtl");
+        payload.setStart(2);
+        payload.setEnd(3);
+        payload.setMin(0);
+        payload.setMax(3);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_3");
+        payload.setType(PayloadType.INTEGER.name());
+        payload.setStart(4);
+        payload.setEnd(5);
+        payload.setMin(3);
+        payload.setMax(3);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_4");
+        payload.setType(PayloadType.LONG.name());
+        payload.setStart(6);
+        payload.setEnd(7);
+        payload.setMin(768);
+        payload.setMax(768);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_5");
+        payload.setType(PayloadType.HEX.name());
+        payload.setDirection("rtl");
+        payload.setStart(8);
+        payload.setEnd(11);
+        payload.setMin(0);
+        payload.setMax("0xFFFFFFFF");
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_5");
+        payload.setType(PayloadType.HEX.name());
+        payload.setDirection("rtl");
+        payload.setStart(18);
+        payload.setEnd(19);
+        payload.setMin(774);
+        payload.setMax("0x0306");
+        payloads.add(payload);
+
+        String responseFrame = "3F3E030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidateResponseFrameIfPayloadListNull() {
+        String responseFrame = "3F3E030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(null, responseFrame).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidateResponseFrameIfPayloadListEmpty() {
+        String responseFrame = "3F3E030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(new ArrayList<>(), responseFrame).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldTriggerExceptionIfIntegerPayloadOutOfBounds() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setDirection("rtl");
+        payload.setType(PayloadType.INTEGER.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setMin(0);
+        payload.setMax(2);
+        payloads.add(payload);
+
+        String responseFrame = "0300030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidPayloadValueException.class);
+    }
+
+    @Test
+    public void shouldTriggerExceptionIfLongPayloadOutOfBounds() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setDirection("rtl");
+        payload.setType(PayloadType.LONG.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setMin(0);
+        payload.setMax(2);
+        payloads.add(payload);
+
+        String responseFrame = "0300030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidPayloadValueException.class);
+    }
+
+    @Test
+    public void shouldTriggerExceptionIfHexPayloadOutOfBounds() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setDirection("rtl");
+        payload.setType(PayloadType.HEX.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setMin(0);
+        payload.setMax(2);
+        payloads.add(payload);
+
+        String responseFrame = "0300030000030300FFFF00000000000000000603";
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(InvalidPayloadValueException.class);
     }
