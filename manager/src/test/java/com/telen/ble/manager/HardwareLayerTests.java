@@ -3,7 +3,6 @@ package com.telen.ble.manager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.test.mock.MockContext;
@@ -22,20 +21,20 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.reactivex.android.plugins.RxAndroidPlugins;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HardwareLayerTests {

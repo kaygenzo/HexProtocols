@@ -22,7 +22,7 @@ public class ResponseFrameFactory {
                 returnResponseFrame = type.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
-                emitter.onError(e);<
+                emitter.onError(e);
                 return;
             }
 

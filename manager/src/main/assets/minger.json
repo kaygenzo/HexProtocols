@@ -12,7 +12,7 @@
             "name": "PREFIX",
             "start": 0,
             "end": 7,
-            "type": "HEX",
+            "type": "HEX_STRING",
             "value": "01fe000053831000"
           },
           {
@@ -46,7 +46,7 @@
             "name": "UNKNOWN",
             "start": 11,
             "end": 12,
-            "type": "HEX",
+            "type": "HEX_STRING",
             "value": "0050"
           },
           {
@@ -71,7 +71,7 @@
             "name": "SUFFIX",
             "start": 15,
             "end": 15,
-            "type": "HEX",
+            "type": "HEX_STRING",
             "value": "00"
           }
         ]
