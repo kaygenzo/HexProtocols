@@ -3,9 +3,11 @@ package com.telen.ble.manager;
 import com.telen.ble.manager.model.Payload;
 import com.telen.ble.manager.exceptions.InvalidPayloadLengthException;
 import com.telen.ble.manager.exceptions.InvalidPayloadValueException;
+import com.telen.ble.manager.model.PayloadType;
 import com.telen.ble.manager.validator.DataValidator;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -53,7 +55,7 @@ public class DataValidatorTests {
 
         Payload payload = new Payload();
         payload.setName("SUBROUTINE");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(0);
         payload.setEnd(3);
         payloads.add(payload);
@@ -73,7 +75,7 @@ public class DataValidatorTests {
 
         Payload payload = new Payload();
         payload.setName("TEST");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(0);
         payload.setEnd(0);
         payload.setMin(0);
@@ -95,7 +97,7 @@ public class DataValidatorTests {
 
         Payload payload = new Payload();
         payload.setName("TEST");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(0);
         payload.setEnd(0);
         payload.setMin(4);
@@ -117,7 +119,7 @@ public class DataValidatorTests {
 
         Payload payload = new Payload();
         payload.setName("TEST");
-        payload.setType("LONG");
+        payload.setType(PayloadType.LONG.name());
         payload.setStart(0);
         payload.setEnd(0);
         payload.setMin(0);
@@ -139,7 +141,7 @@ public class DataValidatorTests {
 
         Payload payload = new Payload();
         payload.setName("TEST");
-        payload.setType("LONG");
+        payload.setType(PayloadType.LONG.name());
         payload.setStart(0);
         payload.setEnd(0);
         payload.setMin(4);
@@ -153,5 +155,54 @@ public class DataValidatorTests {
         dataValidator.validateData(payloads, data).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
+    }
+
+    @Test
+    public void shouldNotValidHexValueWithOutOfBoundsValue() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setType(PayloadType.HEX_STRING.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setValue("3F3E");
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_2");
+        payload.setType(PayloadType.INTEGER.name());
+        payload.setStart(4);
+        payload.setEnd(5);
+        payload.setMin(0);
+        payload.setMax(3);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_3");
+        payload.setType(PayloadType.LONG.name());
+        payload.setStart(6);
+        payload.setEnd(7);
+        payload.setMin(0);
+        payload.setMax(3);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_4");
+        payload.setType(PayloadType.HEX.name());
+        payload.setStart(8);
+        payload.setEnd(11);
+        payload.setMin(0);
+        payload.setMax("0xFFFFFF");
+        payloads.add(payload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("PAYLOAD_2", 1);
+        data.put("PAYLOAD_3", 2);
+        data.put("PAYLOAD_4", 0xFFFFFFFFL);
+
+        TestObserver<String> observer = new TestObserver<>();
+        dataValidator.validateData(payloads, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidPayloadValueException.class);
     }
 }

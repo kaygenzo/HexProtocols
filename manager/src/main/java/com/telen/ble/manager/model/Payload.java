@@ -18,11 +18,11 @@ public class Payload {
 
     @SerializedName("min")
     @Expose
-    private int min;
+    private String min;
 
     @SerializedName("max")
     @Expose
-    private int max;
+    private String max;
 
     @SerializedName("type")
     @Expose
@@ -31,6 +31,10 @@ public class Payload {
     @SerializedName("value")
     @Expose
     private String value;
+
+    @SerializedName("direction")
+    @Expose
+    private String direction;
 
     public String getType() {
         return type;
@@ -72,19 +76,35 @@ public class Payload {
         this.value = value;
     }
 
-    public int getMin() {
+    public String getMin() {
         return min;
     }
 
-    public void setMin(int min) {
+    public void setMin(String min) {
         this.min = min;
     }
 
-    public int getMax() {
+    public void setMin(int min) {
+        this.min = String.valueOf(min);
+    }
+
+    public String getMax() {
         return max;
     }
 
-    public void setMax(int max) {
+    public void setMax(String max) {
         this.max = max;
+    }
+
+    public void setMax(int max) {
+        this.max = String.valueOf(max);
+    }
+
+    public String getDirection() {
+        return direction;
+    }
+
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 }

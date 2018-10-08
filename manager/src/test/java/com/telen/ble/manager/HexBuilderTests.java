@@ -2,6 +2,7 @@ package com.telen.ble.manager;
 
 import com.telen.ble.manager.builder.HexBuilder;
 import com.telen.ble.manager.model.Payload;
+import com.telen.ble.manager.model.PayloadType;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -58,28 +59,28 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("RED");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(4);
         payload.setEnd(4);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("GREEN");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(5);
         payload.setEnd(5);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("BLUE");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(6);
         payload.setEnd(6);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("SUFFIX");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(7);
         payload.setEnd(19);
         payload.setValue("bcdefghijklmnopqrstuvwxyz");
@@ -91,7 +92,7 @@ public class HexBuilderTests {
         List<Payload> payloads = new ArrayList<>();
         Payload payload = new Payload();
         payload.setName("PREFIX");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(0);
         payload.setEnd(7);
         payload.setValue("01fe000053831000");
@@ -99,7 +100,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("GREEN");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(8);
         payload.setEnd(8);
         payload.setValue("0");
@@ -107,7 +108,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("BLUE");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(9);
         payload.setEnd(9);
         payload.setValue("0");
@@ -115,7 +116,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("RED");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(10);
         payload.setEnd(10);
         payload.setValue("255");
@@ -123,7 +124,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("UNKNOWN");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(11);
         payload.setEnd(12);
         payload.setValue("0050");
@@ -131,7 +132,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("LUMINOSITY_1");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(13);
         payload.setEnd(13);
         payload.setValue("2");
@@ -139,7 +140,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("LUMINOSITY_1");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(14);
         payload.setEnd(14);
         payload.setValue("2");
@@ -147,7 +148,7 @@ public class HexBuilderTests {
 
         payload = new Payload();
         payload.setName("SUFFIX");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(15);
         payload.setEnd(15);
         payload.setValue("00");
@@ -163,6 +164,50 @@ public class HexBuilderTests {
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals("01fe0000538310000000FF005002020000000000".toLowerCase(), observer.values().get(0).toLowerCase());
+    }
+
+    @Test
+    public void shouldBuildCommandWithHexValues() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setName("PAYLOAD_1");
+        payload.setType(PayloadType.HEX_STRING.name());
+        payload.setStart(0);
+        payload.setEnd(1);
+        payload.setValue("3F3E");
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_2");
+        payload.setType(PayloadType.INTEGER.name());
+        payload.setStart(4);
+        payload.setEnd(5);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_3");
+        payload.setType(PayloadType.LONG.name());
+        payload.setStart(6);
+        payload.setEnd(7);
+        payloads.add(payload);
+
+        payload = new Payload();
+        payload.setName("PAYLOAD_4");
+        payload.setType(PayloadType.HEX.name());
+        payload.setStart(8);
+        payload.setEnd(11);
+        payloads.add(payload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("PAYLOAD_2", 1);
+        data.put("PAYLOAD_3", 2);
+        data.put("PAYLOAD_4", 0xFFFF);
+
+        TestObserver<String> observer = new TestObserver<>();
+        hexBuilder.buildHexaCommand(payloads, data).subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+        Assert.assertEquals("3F3E0000000100020000FFFF0000000000000000".toLowerCase(), observer.values().get(0).toLowerCase());
     }
 
     @Test

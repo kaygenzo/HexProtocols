@@ -7,6 +7,7 @@ import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.model.Command;
 import com.telen.ble.manager.model.Device;
 import com.telen.ble.manager.model.Payload;
+import com.telen.ble.manager.model.PayloadType;
 import com.telen.ble.manager.model.Request;
 import com.telen.ble.manager.model.Response;
 import com.telen.ble.manager.exceptions.CommandTimeoutException;
@@ -79,35 +80,35 @@ public class DataLayerTests {
 
         Payload payload = new Payload();
         payload.setName("SUBROUTINE");
-        payload.setType("LONG");
+        payload.setType(PayloadType.LONG.name());
         payload.setStart(0);
         payload.setEnd(3);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("RED");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(4);
         payload.setEnd(4);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("GREEN");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(5);
         payload.setEnd(5);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("BLUE");
-        payload.setType("INTEGER");
+        payload.setType(PayloadType.INTEGER.name());
         payload.setStart(6);
         payload.setEnd(6);
         payloads.add(payload);
 
         payload = new Payload();
         payload.setName("SUFFIX");
-        payload.setType("HEX");
+        payload.setType(PayloadType.HEX_STRING.name());
         payload.setStart(7);
         payload.setEnd(19);
         payload.setValue("bcdefghijklmnopqrstuvwxyz");

@@ -148,7 +148,6 @@ public class HardwareLayerTests {
         when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());
         when(mockrxBleDevice.observeConnectionStateChanges()).thenReturn(Observable.empty());
         when(mockrxBleDevice.establishConnection(any(Boolean.class), any(Timeout.class))).thenReturn(Observable.just(mockBleConnection));
-        when(mockBluetoothDevice.getAddress()).thenReturn(device.getMacAddress());
         when(mockBluetoothAdapter.getBondedDevices()).thenReturn(new HashSet<>());
         when(mockrxBleDevice.getBluetoothDevice()).thenReturn(mockBluetoothDevice);
 
@@ -177,7 +176,6 @@ public class HardwareLayerTests {
         when(mockrxBleDevice.getMacAddress()).thenReturn(device.getMacAddress());
         when(mockrxBleDevice.observeConnectionStateChanges()).thenReturn(Observable.empty());
         when(mockrxBleDevice.establishConnection(any(Boolean.class), any(Timeout.class))).thenReturn(Observable.just(mockBleConnection));
-        when(mockBluetoothDevice.getAddress()).thenReturn(device.getMacAddress());
         when(mockBluetoothAdapter.getBondedDevices()).thenReturn(new HashSet<>());
         when(mockrxBleDevice.getBluetoothDevice()).thenReturn(mockBluetoothDevice);
 

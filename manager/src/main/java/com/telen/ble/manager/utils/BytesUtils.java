@@ -18,4 +18,29 @@ public class BytesUtils {
         }
         return data;
     }
+
+    public static String[] splitStringByLength(String string, int length) {
+        if(string!=null && string.length()>0) {
+            String[] result = new String[(string.length()+1)/length];
+            int index = 0;
+            int cpt = 0;
+            while (index<string.length()) {
+                String subString = string.substring(index, Math.min(index+length, string.length()));
+                result[cpt] = subString;
+                cpt++;
+                index = index + length;
+            }
+            return result;
+        }
+        return null;
+    }
+
+    public static String reverseBytes(String hexBytes) {
+        String[] split = BytesUtils.splitStringByLength(hexBytes, 2);
+        StringBuilder reversed = new StringBuilder();
+        for (int i = split.length-1; i>=0; i--) {
+            reversed.append(split[i]);
+        }
+        return reversed.toString();
+    }
 }

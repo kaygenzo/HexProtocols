@@ -9,6 +9,7 @@ import com.telen.ble.manager.builder.HexBuilder;
 import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.layers.impl.BleHardwareConnectionLayer;
 import com.telen.ble.manager.layers.HardwareLayerInterface;
+import com.telen.ble.manager.model.ResponseFrameFactory;
 import com.telen.ble.manager.validator.DataValidator;
 
 import javax.inject.Singleton;
@@ -69,5 +70,11 @@ public class LibraryModule {
     @Singleton
     public HexBuilder provideHexBuilder() {
         return new HexBuilder();
+    }
+
+    @Provides
+    @Singleton
+    public ResponseFrameFactory provideResponseFrameFactory() {
+        return new ResponseFrameFactory();
     }
 }
