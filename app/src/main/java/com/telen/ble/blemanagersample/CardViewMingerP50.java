@@ -10,7 +10,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.telen.ble.manager.devices.minger_p50.Minger_P50;
+import com.telen.ble.blemanagersample.devices.minger.Minger_P50;
 import com.telen.ble.manager.model.Device;
 
 import io.reactivex.CompletableObserver;

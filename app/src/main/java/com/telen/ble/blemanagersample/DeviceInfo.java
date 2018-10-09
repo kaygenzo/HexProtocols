@@ -1,8 +1,9 @@
-package com.telen.ble.manager.model;
+package com.telen.ble.blemanagersample;
+
+import com.telen.ble.manager.model.DeviceType;
 
 public enum DeviceInfo {
-    MINGER(DeviceType.LIGHTBULB, "minger.json"),
-    SIMULATOR(DeviceType.SIMULATOR,"test.json");
+    MINGER(DeviceType.LIGHTBULB, "minger.json")
 
     private final DeviceType type;
     private final String assetPath;

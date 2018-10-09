@@ -11,10 +11,10 @@ import java.io.InputStreamReader;
 
 public class ProtocolConfiguration {
 
-    public static DeviceConfiguration parse(Context context, DeviceInfo deviceInfo) {
+    public static DeviceConfiguration parse(Context context, String protocolPath) {
         InputStream inputStream = null;
         try {
-            inputStream = context.getAssets().open(deviceInfo.getProtocolPath());
+            inputStream = context.getAssets().open(protocolPath);
             JsonReader reader = new JsonReader(new InputStreamReader(inputStream));
             Gson gson = new Gson();
             return gson.fromJson(reader, DeviceConfiguration.class);

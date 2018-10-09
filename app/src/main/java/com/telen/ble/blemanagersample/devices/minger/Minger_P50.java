@@ -1,14 +1,14 @@
-package com.telen.ble.manager.devices.minger_p50;
+package com.telen.ble.blemanagersample.devices.minger;
 
 import android.content.Context;
 
+import com.telen.ble.blemanagersample.DaggerApplicationWrapper;
+import com.telen.ble.blemanagersample.DeviceInfo;
+import com.telen.ble.manager.devices.GenericDevice;
 import com.telen.ble.manager.layers.impl.DataLayerImpl;
 import com.telen.ble.manager.model.Device;
 import com.telen.ble.manager.model.DeviceConfiguration;
-import com.telen.ble.manager.model.DeviceInfo;
 import com.telen.ble.manager.model.ProtocolConfiguration;
-import com.telen.ble.manager.devices.GenericDevice;
-import com.telen.ble.manager.di.DaggerWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +23,15 @@ import io.reactivex.schedulers.Schedulers;
 
 public class Minger_P50 implements GenericDevice {
 
-    @Inject
-    DataLayerImpl dataLayer;
-    @Inject Context mContext;
+    @Inject DataLayerImpl dataLayer;
+    private Context mContext;
 
     private DeviceConfiguration deviceConfiguration;
 
     public Minger_P50(Context context) {
-        DaggerWrapper.getComponent(context).inject(this);
-        deviceConfiguration = ProtocolConfiguration.parse(mContext, DeviceInfo.MINGER);
+        this.mContext = context;
+        DaggerApplicationWrapper.getComponent(context).inject(this);
+        deviceConfiguration = ProtocolConfiguration.parse(mContext, DeviceInfo.MINGER.getProtocolPath());
     }
 
     @Override
