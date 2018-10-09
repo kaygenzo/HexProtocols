@@ -10,9 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import com.telen.ble.manager.model.DeviceInfo;
-
-
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE = 0;
