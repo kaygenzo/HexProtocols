@@ -33,9 +33,6 @@ public class DevicesBLEAdapter extends RecyclerView.Adapter<DevicesBLEAdapter.De
             case MINGER:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_adapter_minger, parent, false);
                 return new DevicesViewHolder(view);
-            case OC100:
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_adapter_oc100, parent, false);
-                return new DevicesViewHolder(view);
         }
         return null;
     }
