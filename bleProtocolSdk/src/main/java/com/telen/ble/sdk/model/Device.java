@@ -1,8 +1,11 @@
 package com.telen.ble.sdk.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.Objects;
 
-public class Device {
+public class Device implements Parcelable {
     private String name;
     private String macAddress;
 
@@ -10,6 +13,34 @@ public class Device {
         this.name = name;
         this.macAddress = macAddress;
     }
+
+    protected Device(Parcel in) {
+        name = in.readString();
+        macAddress = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(name);
+        dest.writeString(macAddress);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<Device> CREATOR = new Creator<Device>() {
+        @Override
+        public Device createFromParcel(Parcel in) {
+            return new Device(in);
+        }
+
+        @Override
+        public Device[] newArray(int size) {
+            return new Device[size];
+        }
+    };
 
     @Override
     public boolean equals(Object o) {

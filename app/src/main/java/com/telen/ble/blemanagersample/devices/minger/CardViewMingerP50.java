@@ -1,6 +1,7 @@
-package com.telen.ble.blemanagersample;
+package com.telen.ble.blemanagersample.devices.minger;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -10,7 +11,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.telen.ble.blemanagersample.devices.minger.Minger_P50;
+import com.telen.ble.blemanagersample.Constants;
+import com.telen.ble.blemanagersample.R;
 import com.telen.ble.sdk.model.Device;
 
 import io.reactivex.CompletableObserver;
@@ -31,6 +33,7 @@ public class CardViewMingerP50 extends CardView {
     private Button scan;
     private Button bond;
     private Button disconnect;
+    private Button save;
     private SeekBar redSlide;
     private SeekBar greenSlide;
     private SeekBar blueSlide;
@@ -69,12 +72,30 @@ public class CardViewMingerP50 extends CardView {
         blueSlide = findViewById(R.id.blue);
         luminositySlide = findViewById(R.id.luminosity);
         information = findViewById(R.id.information);
+        save = findViewById(R.id.save);
 
         disconnect.setEnabled(false);
         connect.setEnabled(false);
         bond.setEnabled(false);
 
         minger_p50 = new Minger_P50(context);
+
+        final SharedPreferences prefs = getContext().getSharedPreferences(Constants.PREFS_APPLICATION, 0);
+        String lastDeviceName = prefs.getString(Constants.PREF_NAME, null);
+        String lastMacAddress = prefs.getString(Constants.PREF_MAC, null);
+        if(lastDeviceName != null && lastMacAddress != null) {
+            mDevice = new Device(lastDeviceName, lastMacAddress);
+            deviceReady(mDevice);
+        }
+
+        save.setOnClickListener(view -> {
+            if(mDevice!=null) {
+                SharedPreferences.Editor ed = prefs.edit();
+                ed.putString(Constants.PREF_NAME, mDevice.getName());
+                ed.putString(Constants.PREF_MAC, mDevice.getMacAddress());
+                ed.apply();
+            }
+        });
 
         scan.setOnClickListener(view -> {
             information.setText("");
@@ -89,10 +110,7 @@ public class CardViewMingerP50 extends CardView {
                         @Override
                         public void onSuccess(Device device) {
                             CardViewMingerP50.this.mDevice = device;
-                            information.setText(device.toString());
-                            disconnect.setEnabled(true);
-                            connect.setEnabled(true);
-                            bond.setEnabled(true);
+                            deviceReady(device);
                         }
 
                         @Override
@@ -325,5 +343,12 @@ public class CardViewMingerP50 extends CardView {
 
             }
         });
+    }
+
+    private void deviceReady(Device device) {
+        information.setText(device.toString());
+        disconnect.setEnabled(true);
+        connect.setEnabled(true);
+        bond.setEnabled(true);
     }
 }

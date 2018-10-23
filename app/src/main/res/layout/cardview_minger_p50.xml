@@ -54,6 +54,15 @@
             app:layout_constraintTop_toTopOf="@+id/scan"/>
 
         <Button
+            android:id="@+id/save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_title_save"
+            app:layout_constraintLeft_toLeftOf="@+id/scan"
+            app:layout_constraintRight_toRightOf="@+id/scan"
+            app:layout_constraintTop_toBottomOf="@+id/scan"/>
+
+        <Button
             android:id="@+id/disconnect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
