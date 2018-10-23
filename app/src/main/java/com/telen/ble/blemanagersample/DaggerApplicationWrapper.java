@@ -2,7 +2,7 @@ package com.telen.ble.blemanagersample;
 
 import android.content.Context;
 
-import com.telen.ble.manager.di.DaggerWrapper;
+import com.telen.ble.sdk.di.DaggerWrapper;
 
 public class DaggerApplicationWrapper {
 

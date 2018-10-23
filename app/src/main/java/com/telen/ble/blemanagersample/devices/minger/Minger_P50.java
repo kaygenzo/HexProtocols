@@ -4,11 +4,11 @@ import android.content.Context;
 
 import com.telen.ble.blemanagersample.DaggerApplicationWrapper;
 import com.telen.ble.blemanagersample.DeviceInfo;
-import com.telen.ble.manager.devices.GenericDevice;
-import com.telen.ble.manager.layers.impl.DataLayerImpl;
-import com.telen.ble.manager.model.Device;
-import com.telen.ble.manager.model.DeviceConfiguration;
-import com.telen.ble.manager.model.ProtocolConfiguration;
+import com.telen.ble.sdk.devices.GenericBleDevice;
+import com.telen.ble.sdk.layers.impl.DataLayerImpl;
+import com.telen.ble.sdk.model.Device;
+import com.telen.ble.sdk.model.DeviceConfiguration;
+import com.telen.ble.sdk.model.ProtocolConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +21,7 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
-public class Minger_P50 implements GenericDevice {
+public class Minger_P50 implements GenericBleDevice {
 
     @Inject DataLayerImpl dataLayer;
     private Context mContext;

@@ -11,7 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.telen.ble.blemanagersample.devices.minger.Minger_P50;
-import com.telen.ble.manager.model.Device;
+import com.telen.ble.sdk.model.Device;
 
 import io.reactivex.CompletableObserver;
 import io.reactivex.Observer;

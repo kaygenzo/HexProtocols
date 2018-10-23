@@ -4,4 +4,7 @@
     <string name="button_title_connect">Connect</string>
     <string name="button_title_bond">Bond</string>
     <string name="button_title_disconnect">Disconnect</string>
+
+    <string name="button_title_light_on">Light On</string>
+    <string name="button_title_light_off">Light Off</string>
 </resources>

@@ -28,9 +28,13 @@ public class DevicesBLEAdapter extends RecyclerView.Adapter<DevicesBLEAdapter.De
     @Override
     public DevicesBLEAdapter.DevicesViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         DeviceInfo deviceInfo = DeviceInfo.values()[viewType];
+        View view;
         switch (deviceInfo) {
             case MINGER:
-                View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_adapter_minger, parent, false);
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_adapter_minger, parent, false);
+                return new DevicesViewHolder(view);
+            case OC100:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_adapter_oc100, parent, false);
                 return new DevicesViewHolder(view);
         }
         return null;
