@@ -23,6 +23,10 @@ repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
+ext {
+    retrofitVersion = '2.2.0'
+}
+
 android {
     compileSdkVersion 27
     defaultConfig {
@@ -74,4 +78,16 @@ dependencies {
     implementation('com.crashlytics.sdk.android:crashlytics:2.9.5@aar') {
         transitive = true
     }
+    implementation files('libs/bcprov-jdk15on-160.jar')
+
+    //retrofit
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    //JSON Parsing
+    implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
+    //Retrofit to rx
+    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofitVersion"
+    implementation 'com.google.code.gson:gson:2.7'
+
+    //http logging
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.6.0'
 }
