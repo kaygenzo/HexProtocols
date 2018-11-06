@@ -1,8 +1,8 @@
 package com.telen.sdk.common;
 
-import com.telen.ble.sdk.builder.HexBuilder;
-import com.telen.ble.sdk.model.Payload;
-import com.telen.ble.sdk.model.PayloadType;
+import com.telen.sdk.ble.builder.HexBuilder;
+import com.telen.sdk.ble.model.Payload;
+import com.telen.sdk.ble.model.PayloadType;
 
 import org.junit.AfterClass;
 import org.junit.Assert;

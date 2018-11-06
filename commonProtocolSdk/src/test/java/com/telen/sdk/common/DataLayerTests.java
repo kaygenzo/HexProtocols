@@ -2,17 +2,17 @@ package com.telen.sdk.common;
 
 import android.util.Log;
 
-import com.telen.ble.sdk.builder.HexBuilder;
-import com.telen.ble.sdk.layers.impl.DataLayerImpl;
-import com.telen.ble.sdk.model.Command;
-import com.telen.ble.sdk.model.Device;
-import com.telen.ble.sdk.model.Payload;
-import com.telen.ble.sdk.model.PayloadType;
-import com.telen.ble.sdk.model.Request;
-import com.telen.ble.sdk.model.Response;
-import com.telen.ble.sdk.exceptions.CommandTimeoutException;
-import com.telen.ble.sdk.layers.HardwareLayerInterface;
-import com.telen.ble.sdk.validator.DataValidator;
+import com.telen.sdk.ble.builder.HexBuilder;
+import com.telen.sdk.ble.layers.impl.DataLayerImpl;
+import com.telen.sdk.ble.model.Command;
+import com.telen.sdk.ble.model.Device;
+import com.telen.sdk.ble.model.Payload;
+import com.telen.sdk.ble.model.PayloadType;
+import com.telen.sdk.ble.model.Request;
+import com.telen.sdk.ble.model.Response;
+import com.telen.sdk.ble.exceptions.CommandTimeoutException;
+import com.telen.sdk.ble.layers.HardwareLayerInterface;
+import com.telen.sdk.ble.validator.DataValidator;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -39,7 +39,6 @@ import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Log.class})
