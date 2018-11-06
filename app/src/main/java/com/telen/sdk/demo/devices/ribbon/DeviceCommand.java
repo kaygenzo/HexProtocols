@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample.devices.ribbon;
+package com.telen.sdk.demo.devices.ribbon;
 
 import android.util.Log;
 

@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample.devices.ribbon;
+package com.telen.sdk.demo.devices.ribbon;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
-import com.telen.sdk.blemanagersample.R;
+import com.telen.sdk.demo.R;
 import com.telen.sdk.common.utils.ColorUtils;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;

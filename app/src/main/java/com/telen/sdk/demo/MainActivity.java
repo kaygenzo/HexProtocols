@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample;
+package com.telen.sdk.demo;
 
 import android.Manifest;
 import android.content.pm.PackageManager;

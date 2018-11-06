@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample;
+package com.telen.sdk.demo;
 
 public class Constants {
     public static final String PREFS_APPLICATION = "application_preferences";

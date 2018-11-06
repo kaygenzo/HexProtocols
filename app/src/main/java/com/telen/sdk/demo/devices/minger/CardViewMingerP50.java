@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample.devices.minger;
+package com.telen.sdk.demo.devices.minger;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,8 +11,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.telen.sdk.blemanagersample.Constants;
-import com.telen.sdk.blemanagersample.R;
+import com.telen.sdk.demo.Constants;
+import com.telen.sdk.demo.R;
 import com.telen.sdk.common.models.Device;
 
 import io.reactivex.CompletableObserver;

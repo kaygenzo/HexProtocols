@@ -1,10 +1,10 @@
-package com.telen.sdk.blemanagersample.devices.ribbon;
+package com.telen.sdk.demo.devices.ribbon;
 
 import android.content.Context;
 import android.util.Log;
 
-import com.telen.sdk.blemanagersample.DaggerApplicationWrapper;
-import com.telen.sdk.blemanagersample.DeviceInfo;
+import com.telen.sdk.demo.DaggerApplicationWrapper;
+import com.telen.sdk.demo.DeviceInfo;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.DeviceConfiguration;

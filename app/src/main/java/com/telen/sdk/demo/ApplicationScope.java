@@ -1,4 +1,4 @@
-package com.telen.sdk.blemanagersample;
+package com.telen.sdk.demo;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

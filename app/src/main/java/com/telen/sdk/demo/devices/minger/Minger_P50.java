@@ -1,9 +1,9 @@
-package com.telen.sdk.blemanagersample.devices.minger;
+package com.telen.sdk.demo.devices.minger;
 
 import android.content.Context;
 
-import com.telen.sdk.blemanagersample.DaggerApplicationWrapper;
-import com.telen.sdk.blemanagersample.DeviceInfo;
+import com.telen.sdk.demo.DaggerApplicationWrapper;
+import com.telen.sdk.demo.DeviceInfo;
 import com.telen.sdk.ble.devices.GenericBleDevice;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
 import com.telen.sdk.common.layers.DataLayerInterface;

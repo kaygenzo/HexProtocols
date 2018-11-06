@@ -1,7 +1,7 @@
-package com.telen.sdk.blemanagersample;
+package com.telen.sdk.demo;
 
-import com.telen.sdk.blemanagersample.devices.minger.Minger_P50;
-import com.telen.sdk.blemanagersample.devices.ribbon.LightRibbon;
+import com.telen.sdk.demo.devices.minger.Minger_P50;
+import com.telen.sdk.demo.devices.ribbon.LightRibbon;
 
 import dagger.Component;
 
