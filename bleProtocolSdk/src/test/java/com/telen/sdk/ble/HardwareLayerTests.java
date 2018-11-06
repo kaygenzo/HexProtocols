@@ -12,7 +12,7 @@ import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.Timeout;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
-import com.telen.sdk.ble.model.Device;
+import com.telen.sdk.common.models.Device;
 
 import org.junit.AfterClass;
 import org.junit.Assert;

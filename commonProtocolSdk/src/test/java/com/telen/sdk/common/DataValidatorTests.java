@@ -1,10 +1,10 @@
 package com.telen.sdk.common;
 
-import com.telen.sdk.ble.model.Payload;
-import com.telen.sdk.ble.exceptions.InvalidPayloadLengthException;
-import com.telen.sdk.ble.exceptions.InvalidPayloadValueException;
-import com.telen.sdk.ble.model.PayloadType;
-import com.telen.sdk.ble.validator.DataValidator;
+import com.telen.sdk.common.exceptions.InvalidPayloadLengthException;
+import com.telen.sdk.common.exceptions.InvalidPayloadValueException;
+import com.telen.sdk.common.models.Payload;
+import com.telen.sdk.common.models.PayloadType;
+import com.telen.sdk.common.validator.DataValidator;
 
 import org.junit.AfterClass;
 import org.junit.Before;

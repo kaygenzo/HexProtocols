@@ -1,8 +1,8 @@
 package com.telen.sdk.common;
 
-import com.telen.sdk.ble.builder.HexBuilder;
-import com.telen.sdk.ble.model.Payload;
-import com.telen.sdk.ble.model.PayloadType;
+import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.models.Payload;
+import com.telen.sdk.common.models.PayloadType;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -160,7 +160,7 @@ public class HexBuilderTests {
         data.put("BLUE", 0);
 
         TestObserver<String> observer = new TestObserver<>();
-        hexBuilder.buildHexaCommand(payloads, data).subscribe(observer);
+        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals("01fe0000538310000000FF005002020000000000".toLowerCase(), observer.values().get(0).toLowerCase());
@@ -204,7 +204,7 @@ public class HexBuilderTests {
         data.put("PAYLOAD_4", 0xFFFF);
 
         TestObserver<String> observer = new TestObserver<>();
-        hexBuilder.buildHexaCommand(payloads, data).subscribe(observer);
+        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals("3F3E0000000100020000FFFF0000000000000000".toLowerCase(), observer.values().get(0).toLowerCase());
@@ -218,7 +218,7 @@ public class HexBuilderTests {
         data.put("GREEN", 255);
         data.put("BLUE", 125);
 
-        hexBuilder.buildHexaCommand(payloads, data).subscribe(observer);
+        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals(observer.values().get(0),"ffffffff7dff7d0bcdefghijklmnopqrstuvwxyz");
