@@ -90,4 +90,6 @@ dependencies {
 
     //http logging
     implementation 'com.squareup.okhttp3:logging-interceptor:3.6.0'
+
+    implementation 'com.github.QuadFlask:colorpicker:0.0.13'
 }

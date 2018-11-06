@@ -19,10 +19,12 @@ public class HexBuilder {
 
     private static final String TAG = HexBuilder.class.getSimpleName();
 
+    private static final int DEFAULT_COMMAND_LENGTH = 20;
+
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public Single<String> buildHexaCommand(@NonNull List<Payload> payloads, @Nullable Map<String, Object> data) {
+    public Single<String> buildHexaCommand(@NonNull List<Payload> payloads, @Nullable Map<String, Object> data, int bytesLength) {
         return Single.create(emitter -> {
-            String[] commandArray = new String[20];
+            String[] commandArray = new String[bytesLength > 0 ? bytesLength: DEFAULT_COMMAND_LENGTH];
             Arrays.fill(commandArray, "00");
 
             for (Payload payload: payloads) {
@@ -61,8 +63,13 @@ public class HexBuilder {
                             hexBuilder.append(Long.toHexString(longValue));
                             break;
                         case HEX:
-                            Long hexValue = Long.decode(obj.toString());
-                            hexBuilder.append(Long.toHexString(hexValue));
+                            try {
+                                Long hexValue = Long.decode(obj.toString());
+                                hexBuilder.append(Long.toHexString(hexValue));
+                            }
+                            catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
                             break;
                         default:
                             Log.d(TAG, "Not managed type "+type+" yet");

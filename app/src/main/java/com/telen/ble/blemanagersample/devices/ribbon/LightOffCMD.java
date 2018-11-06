@@ -1,5 +1,6 @@
-package com.telen.ble.blemanagersample.pending;
+package com.telen.ble.blemanagersample.devices.ribbon;
 
+import com.telen.ble.blemanagersample.devices.ribbon.DevicesCMD;
 import com.telen.ble.sdk.utils.BytesUtils;
 
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.Map;
 public class LightOffCMD extends DevicesCMD {
 
     @Override
-    byte[] getHexDataArray(Map<String, Integer> data) {
+    public byte[] getHexDataArray(Map<String, Integer> data) {
         byte[] bytes = new byte[4];
         bytes[0] = (byte)0x71; // subroutine
         bytes[1] = (byte)0x24; //light on byte

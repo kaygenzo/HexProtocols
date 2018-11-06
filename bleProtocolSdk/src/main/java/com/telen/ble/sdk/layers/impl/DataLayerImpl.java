@@ -12,7 +12,6 @@ import com.telen.ble.sdk.model.Response;
 import com.telen.ble.sdk.validator.DataValidator;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
@@ -27,7 +26,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class DataLayerImpl implements DataLayerInterface {
+public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLayerInterface<T> {
 
     private static final String TAG = DataLayerImpl.class.getSimpleName();
 
@@ -38,14 +37,14 @@ public class DataLayerImpl implements DataLayerInterface {
     private CompositeDisposable mResponseTimeoutDisposable = new CompositeDisposable();
     private CompositeDisposable dataListenerDisposable = new CompositeDisposable();
 
-    private HardwareLayerInterface hardwareInteractionLayer;
+    private T hardwareInteractionLayer;
     private DataValidator dataValidator;
     private HexBuilder hexBuilder;
 
-    private long mRequestTimout = DEFAULT_REQUEST_TIMEOUT_MILLIS;
-    private long mResponseTimout = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
+    private long mRequestTimeout = DEFAULT_REQUEST_TIMEOUT_MILLIS;
+    private long mResponseTimeout = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
 
-    public DataLayerImpl(HardwareLayerInterface hardwareLayer, DataValidator validator, HexBuilder hexBuilder) {
+    public DataLayerImpl(T hardwareLayer, DataValidator validator, HexBuilder hexBuilder) {
         this.hardwareInteractionLayer = hardwareLayer;
         this.dataValidator = validator;
         this.hexBuilder = hexBuilder;
@@ -81,26 +80,24 @@ public class DataLayerImpl implements DataLayerInterface {
             dataListenerDisposable.clear();
             //let's validate payloads and build the hexa string command
             dataValidator.validateData(command.getRequest().getPayloads(), data)
-                    .andThen(hexBuilder.buildHexaCommand(command.getRequest().getPayloads(), data))
+                    .andThen(hardwareInteractionLayer.preProcessBeforeSendingCommand(command.getRequest()))
+                    .andThen(hexBuilder.buildHexaCommand(command.getRequest().getPayloads(), data, command.getRequest().getLength()))
                     .flatMap(hexaCommand -> {
 
                         if(command.getRequest().getTimeout() > 0)
-                            mRequestTimout = command.getRequest().getTimeout();
+                            mRequestTimeout = command.getRequest().getTimeout();
                         startRequestTimeout(emitter);
-
-                        UUID requestUuid = UUID.fromString(command.getRequest().getCharacteristic());
 
                         //if we expect some response from remote device, we listen for any response before sending command
                         if(command.getResponse()!=null) {
 
-                            UUID responseUuid = UUID.fromString(command.getResponse().getCharacteristic());
                             if(command.getResponse().getTimeout() > 0)
-                                mResponseTimout = command.getResponse().getTimeout();
+                                mResponseTimeout = command.getResponse().getTimeout();
 
                             startResponseTimeout(emitter, command.getResponse());
 
                             hardwareInteractionLayer
-                                    .listenResponses(device, responseUuid)
+                                    .listenResponses(device, command.getResponse())
                                     .flatMap(response -> dataValidator.validateData(command.getResponse().getPayloads(), response)
                                             .andThen(Observable.just(response))
                                     )
@@ -136,7 +133,7 @@ public class DataLayerImpl implements DataLayerInterface {
                                     });
 
                         }
-                        return hardwareInteractionLayer.sendCommand(device, requestUuid, hexaCommand);
+                        return hardwareInteractionLayer.sendCommand(device, command.getRequest(), hexaCommand);
                     })
                     .subscribe(new SingleObserver<String>() {
                         @Override
@@ -192,11 +189,11 @@ public class DataLayerImpl implements DataLayerInterface {
     }
 
     private void startRequestTimeout(ObservableEmitter emitter) {
-        startTimeout(emitter, mRequestTimeoutDisposable, mRequestTimout, false);
+        startTimeout(emitter, mRequestTimeoutDisposable, mRequestTimeout, false);
     }
 
     private void startResponseTimeout(@NonNull ObservableEmitter emitter, @NonNull Response reponse) {
-        startTimeout(emitter, mResponseTimeoutDisposable, mResponseTimout, reponse.isCompleteOnTimeout());
+        startTimeout(emitter, mResponseTimeoutDisposable, mResponseTimeout, reponse.isCompleteOnTimeout());
     }
 
     private void stopRequestTimeout() {
@@ -213,10 +210,10 @@ public class DataLayerImpl implements DataLayerInterface {
     }
 
     public void setRequestTimeout(long timeout) {
-        this.mRequestTimout = timeout;
+        this.mRequestTimeout = timeout;
     }
 
     public void setResponseTimeout(long timeout) {
-        this.mResponseTimout = timeout;
+        this.mResponseTimeout = timeout;
     }
 }

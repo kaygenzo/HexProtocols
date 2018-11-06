@@ -46,12 +46,12 @@ public class DataValidator {
                         case HEX_STRING:
                             String obj = (String) value;
                             if (obj.length() > bytesLength * 2)
-                                emitter.onError(new InvalidPayloadLengthException("Invalid payload size: expect " + bytesLength + " bytes but string is length " + obj.length()));
+                                emitter.onError(new InvalidPayloadLengthException("Invalid payload size for "+payload.getName()+" : expect " + bytesLength + " bytes but string is length " + obj.length()));
                             break;
                         case INTEGER:
                             Integer integer = Integer.parseInt(value.toString());
                             if (integer > Integer.parseInt(payload.getMax()) || integer < Integer.parseInt(payload.getMin())) {
-                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect integer between " + payload.getMin() + " and " + payload.getMax()
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value for "+payload.getName()+" : expect integer between " + payload.getMin() + " and " + payload.getMax()
                                         + " but value is " + integer));
                                 return;
                             }
@@ -59,7 +59,7 @@ public class DataValidator {
                         case LONG:
                             Long longValue = Long.parseLong(value.toString());
                             if (longValue > Long.parseLong(payload.getMax()) || longValue < Long.parseLong(payload.getMin())) {
-                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect long between " + payload.getMin() + " and " + payload.getMax()
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value for "+payload.getName()+" : expect long between " + payload.getMin() + " and " + payload.getMax()
                                         + " but value is " + longValue));
                                 return;
                             }
@@ -69,7 +69,7 @@ public class DataValidator {
                             Long hexMin = Long.decode(payload.getMin());
                             Long hexMax = Long.decode(payload.getMax());
                             if (longValue > hexMax || longValue < hexMin) {
-                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect hex between " + payload.getMin() + " and " + payload.getMax()
+                                emitter.onError(new InvalidPayloadValueException("Invalid payload value for "+payload.getName()+" : expect hex between " + payload.getMin() + " and " + payload.getMax()
                                         + " but value is " + longValue));
                                 return;
                             }

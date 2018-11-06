@@ -18,6 +18,8 @@ import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
 import com.telen.ble.sdk.model.Device;
 import com.telen.ble.sdk.layers.HardwareLayerInterface;
+import com.telen.ble.sdk.model.Request;
+import com.telen.ble.sdk.model.Response;
 import com.telen.ble.sdk.utils.BytesUtils;
 
 import java.util.HashMap;
@@ -127,8 +129,8 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     }
 
     @Override
-    public Single<String> sendCommand(Device device, UUID characteristic, String command) {
-        return sendCommand(device, characteristic, BytesUtils.hexStringToByteArray(command))
+    public Single<String> sendCommand(Device device, Request request, String command) {
+        return sendCommand(device, request, BytesUtils.hexStringToByteArray(command))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.io())
                 .doOnError(throwable -> Log.e(TAG,"sendCommand",throwable))
@@ -136,14 +138,14 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     }
 
     @Override
-    public Single<String> sendCommand(Device device, UUID characteristic, byte[] command) {
+    public Single<String> sendCommand(Device device, Request request, byte[] command) {
         return Single.create(emitter -> {
             RxBleConnection bleConnection = devicesConnection.get(device);
             if(bleConnection == null) {
                 emitter.onError(new Exception("No existing connection to this device"));
             }
             else {
-                bleConnection.writeCharacteristic(characteristic, command)
+                bleConnection.writeCharacteristic(UUID.fromString(request.getCharacteristic()), command)
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .doOnError(throwable -> Log.e(TAG,"sendCommand",throwable))
@@ -169,14 +171,14 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     }
 
     @Override
-    public Observable<String> listenResponses(Device device, UUID uuid) {
+    public Observable<String> listenResponses(Device device, Response response) {
         return Observable.create(emitter -> {
             RxBleConnection bleConnection = devicesConnection.get(device);
             if(bleConnection == null) {
                 emitter.onError(new Exception("Connection is null, cannot listen for response frames"));
             }
             else {
-                bleConnection.setupNotification(uuid)
+                bleConnection.setupNotification(UUID.fromString(response.getCharacteristic()))
                         .flatMap(responseBytesObservable -> responseBytesObservable)
                         .map(BytesUtils::byteArrayToHex)
                         .subscribe(new Observer<String>() {
@@ -267,8 +269,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
         });
     }
 
-    @Override
-    public Single<RxBleDeviceServices> getServices(Device device) {
+    private Single<RxBleDeviceServices> getServices(Device device) {
 //        if(rxBleConnection==null)
 //            return Single.error(new IllegalArgumentException("Connection is null, cannot get services"));
 //        return rxBleConnection.discoverServices(30000, TimeUnit.MILLISECONDS)
@@ -296,6 +297,11 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                 emitter.onSuccess(Boolean.FALSE);
             }
         });
+    }
+
+    @Override
+    public Completable preProcessBeforeSendingCommand(Request request) {
+        return Completable.complete();
     }
 
     private void dispose(Disposable disposable) {

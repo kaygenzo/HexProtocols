@@ -4,7 +4,7 @@ import com.telen.ble.sdk.model.DeviceType;
 
 public enum DeviceInfo {
     MINGER(DeviceType.LIGHTBULB, "minger.json"),
-    RIBBON(DeviceType.RIBBON, null);
+    RIBBON(DeviceType.RIBBON, "led_ribbon.json");
 
     private final DeviceType type;
     private final String assetPath;

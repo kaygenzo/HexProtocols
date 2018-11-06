@@ -1,5 +1,6 @@
 package com.telen.ble.blemanagersample;
 
-public interface GenericWifiDevice {
+import com.telen.ble.sdk.devices.GenericDevice;
 
+public interface GenericWifiDevice extends GenericDevice {
 }

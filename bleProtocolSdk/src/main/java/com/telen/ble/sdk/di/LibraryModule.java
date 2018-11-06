@@ -6,9 +6,9 @@ import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
 import com.telen.ble.sdk.builder.HexBuilder;
-import com.telen.ble.sdk.layers.impl.DataLayerImpl;
+import com.telen.ble.sdk.layers.DataLayerInterface;
 import com.telen.ble.sdk.layers.impl.BleHardwareConnectionLayer;
-import com.telen.ble.sdk.layers.HardwareLayerInterface;
+import com.telen.ble.sdk.layers.impl.DataLayerImpl;
 import com.telen.ble.sdk.model.ResponseFrameFactory;
 import com.telen.ble.sdk.validator.DataValidator;
 
@@ -28,13 +28,13 @@ public class LibraryModule {
 
     @Singleton
     @Provides
-    public DataLayerImpl provideDataLayer(HardwareLayerInterface hardwareLayer, DataValidator dataValidator, HexBuilder hexBuilder) {
-        return new DataLayerImpl(hardwareLayer, dataValidator, hexBuilder);
+    public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(BleHardwareConnectionLayer hardwareLayer, DataValidator dataValidator, HexBuilder hexBuilder) {
+        return new DataLayerImpl<>(hardwareLayer, dataValidator, hexBuilder);
     }
 
     @Singleton
     @Provides
-    public HardwareLayerInterface provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter, Context context) {
+    public BleHardwareConnectionLayer provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter, Context context) {
         return new BleHardwareConnectionLayer(client, bluetoothAdapter, context);
     }
 

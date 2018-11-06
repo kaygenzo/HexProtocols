@@ -5,6 +5,8 @@ import android.content.Context;
 import com.telen.ble.blemanagersample.DaggerApplicationWrapper;
 import com.telen.ble.blemanagersample.DeviceInfo;
 import com.telen.ble.sdk.devices.GenericBleDevice;
+import com.telen.ble.sdk.layers.DataLayerInterface;
+import com.telen.ble.sdk.layers.impl.BleHardwareConnectionLayer;
 import com.telen.ble.sdk.layers.impl.DataLayerImpl;
 import com.telen.ble.sdk.model.Device;
 import com.telen.ble.sdk.model.DeviceConfiguration;
@@ -23,7 +25,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class Minger_P50 implements GenericBleDevice {
 
-    @Inject DataLayerImpl dataLayer;
+    @Inject DataLayerInterface<BleHardwareConnectionLayer> dataLayer;
     private Context mContext;
 
     private DeviceConfiguration deviceConfiguration;

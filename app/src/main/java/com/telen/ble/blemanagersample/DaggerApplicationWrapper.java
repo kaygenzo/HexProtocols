@@ -19,6 +19,7 @@ public class DaggerApplicationWrapper {
         mComponent = DaggerApplicationComponent
                 .builder()
                 .libraryComponent(DaggerWrapper.getComponent(context))
+                .applicationModule(new ApplicationModule())
                 .build();
     }
 }

@@ -9,7 +9,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 
-public interface DataLayerInterface {
+public interface DataLayerInterface<E> {
     Single<Device> scan(String deviceName);
     Single<Device> connect(Device device, boolean createBond);
     Completable disconnect(Device device);

@@ -1,4 +1,4 @@
-package com.telen.ble.blemanagersample.pending;
+package com.telen.ble.blemanagersample.devices.ribbon;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -71,7 +71,7 @@ public abstract class DevicesCMD {
         }
     }
 
-    abstract byte[] getHexDataArray(Map<String, Integer> data);
+    public abstract byte[] getHexDataArray(Map<String, Integer> data);
 
     @Override
     public String toString() {

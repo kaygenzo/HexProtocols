@@ -1,15 +1,19 @@
-package com.telen.ble.blemanagersample;
+package com.telen.ble.blemanagersample.devices.ribbon;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.telen.ble.blemanagersample.devices.ribbon.LightRibbon;
-import com.telen.ble.blemanagersample.pending.MagicHueService;
+import com.flask.colorpicker.ColorPickerView;
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
+import com.telen.ble.blemanagersample.R;
+import com.telen.ble.blemanagersample.pending.ColorUtils;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -21,12 +25,14 @@ public class CardViewLightRibbon extends CardView {
     private LightRibbon lightRibbon;
 
     private TextView information;
+    private Button connect;
     private Button on;
     private Button off;
     private SeekBar redSlide;
     private SeekBar greenSlide;
     private SeekBar blueSlide;
     private SeekBar luminositySlide;
+    private Button colorPicker;
 
     private CompositeDisposable slideDisposable = new CompositeDisposable();
     private int red;
@@ -58,20 +64,48 @@ public class CardViewLightRibbon extends CardView {
         information = findViewById(R.id.information);
         on = findViewById(R.id.light_on);
         off = findViewById(R.id.light_off);
+        connect = findViewById(R.id.connect);
+        colorPicker = findViewById(R.id.color_picker);
 
+        lightRibbon = new LightRibbon(getContext());
 
-        lightRibbon = new LightRibbon(MagicHueService.class);
+        connect.setOnClickListener(view -> {
+            lightRibbon.connect(null, false)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe();
+        });
 
         on.setOnClickListener(view -> {
             lightRibbon.lightOn()
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe();
+                    .subscribe(() -> {
+
+                    }, throwable -> {
+                        Log.d(TAG, "", throwable);
+                    });
         });
 
         off.setOnClickListener(view -> {
             lightRibbon.lightOff()
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe();
+        });
+
+        colorPicker.setOnClickListener(view -> {
+            ColorPickerDialogBuilder
+                    .with(context)
+                    .setTitle("Choose color")
+                    .initialColor(Color.rgb(red, green, blue))
+                    .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                    .density(12)
+                    .setOnColorSelectedListener(selectedColor -> {
+                        int[] rgb = ColorUtils.getRGB(selectedColor);
+                        lightRibbon.changeColor(rgb[0], rgb[1], rgb[2])
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe();
+                    })
+                    .build()
+                    .show();
         });
 
         redSlide.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {

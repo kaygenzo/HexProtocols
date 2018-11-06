@@ -26,6 +26,18 @@ public class Request {
     @Expose
     private long timeout;
 
+    @SerializedName("address")
+    @Expose
+    private String address;
+
+    @SerializedName("port")
+    @Expose
+    private int port;
+
+    @SerializedName("isBroadcast")
+    @Expose
+    private boolean isBroadcast;
+
     public String getService() {
         return service;
     }
@@ -60,5 +72,17 @@ public class Request {
 
     public void setTimeout(long timeout) {
         this.timeout = timeout;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public boolean isBroadcast() {
+        return isBroadcast;
     }
 }

@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -43,7 +42,7 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({UUID.class, Log.class})
+@PrepareForTest({Log.class})
 public class DataLayerTests {
 
     private DataLayerImpl datalayer;
@@ -215,9 +214,9 @@ public class DataLayerTests {
         datalayer.setRequestTimeout(-1);
         when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
         when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
-        UUID uuid = UUID.fromString("00007777-0000-1000-8000-00805f9b34fb");
+
         Exception e = new Exception("Fake exception");
-        when(hardwareLayer.sendCommand(expectedDevice, uuid, "hexString")).thenReturn(Single.error(e));
+        when(hardwareLayer.sendCommand(expectedDevice, command.getRequest(), "hexString")).thenReturn(Single.error(e));
         datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(e);
@@ -299,15 +298,10 @@ public class DataLayerTests {
         }
 
 
-        UUID requestUuid = UUID.fromString(command.getRequest().getCharacteristic());
-        UUID responseUuid = UUID.fromString("00008888-0000-1000-8000-00805f9b34fb");
-        PowerMockito.mockStatic(UUID.class);
-        when(UUID.fromString(command.getRequest().getCharacteristic())).thenReturn(requestUuid);
-
         when(dataValidator.validateData(payloads,data)).thenReturn(Completable.complete());
         when(mockHexBuilder.buildHexaCommand(payloads, data)).thenReturn(Single.just("hexString"));
-        when(hardwareLayer.sendCommand(expectedDevice, requestUuid, "hexString")).thenReturn(Single.just("05000000000000000000000000000000000000"));
-        when(hardwareLayer.listenResponses(expectedDevice, responseUuid)).thenReturn(Observable.create(emitter -> {
+        when(hardwareLayer.sendCommand(expectedDevice, command.getRequest(), "hexString")).thenReturn(Single.just("05000000000000000000000000000000000000"));
+        when(hardwareLayer.listenResponses(expectedDevice, command.getResponse())).thenReturn(Observable.create(emitter -> {
                     emitter.onNext("01000000000000000000000000000000000000");
                     emitter.onNext("02000000000000000000000000000000000000");
                     emitter.onNext("03000000000000000000000000000000000000");

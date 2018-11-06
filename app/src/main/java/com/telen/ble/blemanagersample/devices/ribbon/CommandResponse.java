@@ -1,4 +1,4 @@
-package com.telen.ble.blemanagersample.pending;
+package com.telen.ble.blemanagersample.devices.ribbon;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

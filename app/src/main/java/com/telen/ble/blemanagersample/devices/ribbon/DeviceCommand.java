@@ -1,25 +1,16 @@
-package com.telen.ble.blemanagersample.pending;
+package com.telen.ble.blemanagersample.devices.ribbon;
+
+import android.util.Log;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.telen.ble.sdk.utils.BytesUtils;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Security;
 import java.util.List;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
-
 public class DeviceCommand {
+
+    private static final String TAG = DeviceCommand.class.getSimpleName();
+
     @SerializedName("AppSys")
     @Expose
     private String appSys;
@@ -107,6 +98,8 @@ public class DeviceCommand {
             if(instance.getTimestamp()<=0)
                 throw new IllegalArgumentException("Timestamp cannot be less or equal to 0");
             String checkCode = getCheckCode();
+            Log.d(TAG,"timestamp="+instance.getTimestamp());
+            Log.d(TAG,"checkCode="+checkCode);
             instance.setCheckCode(checkCode);
             return instance;
         }
@@ -114,23 +107,24 @@ public class DeviceCommand {
         private String getCheckCode() {
             StringBuilder builder = new StringBuilder();
 
-            builder.append(MagicHueService.CDPID);
-            builder.append(instance.getTimestamp());
-            String data = builder.toString();
-
-            byte[] secretKeyBytes = "0FC154F9C01DFA9656524A0EFABC994F".getBytes();
-            Key localKey = new SecretKeySpec(secretKeyBytes, "AES");
-
-            Security.addProvider(new BouncyCastleProvider());
-            try {
-                Cipher cypher = Cipher.getInstance("AES/ECB/PKCS7Padding", BouncyCastleProvider.PROVIDER_NAME);
-                cypher.init(Cipher.ENCRYPT_MODE, localKey);
-                byte[] finalResult = cypher.doFinal(data.getBytes());
-                return BytesUtils.toString(finalResult);
-            } catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
-                e.printStackTrace();
-                return "";
-            }
+//            builder.append(MagicHueService.CDPID);
+//            builder.append(instance.getTimestamp());
+//            String data = builder.toString();
+//
+//            byte[] secretKeyBytes = "0FC154F9C01DFA9656524A0EFABC994F".getBytes();
+//            Key localKey = new SecretKeySpec(secretKeyBytes, "AES");
+//
+//            Security.addProvider(new BouncyCastleProvider());
+//            try {
+//                Cipher cypher = Cipher.getInstance("AES/ECB/PKCS7Padding", BouncyCastleProvider.PROVIDER_NAME);
+//                cypher.init(Cipher.ENCRYPT_MODE, localKey);
+//                byte[] finalResult = cypher.doFinal(data.getBytes());
+//                return BytesUtils.toString(finalResult);
+//            } catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+//                e.printStackTrace();
+//                return "";
+//            }
+            return builder.toString();
         }
     }
 }

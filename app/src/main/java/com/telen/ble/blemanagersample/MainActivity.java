@@ -50,7 +50,8 @@ public class MainActivity extends AppCompatActivity {
 
         // specify an adapter (see also next example)
         mAdapter = new DevicesBLEAdapter(new DeviceInfo[] {
-                DeviceInfo.MINGER
+                DeviceInfo.MINGER,
+                DeviceInfo.RIBBON
         });
         mRecyclerView.setAdapter(mAdapter);
     }

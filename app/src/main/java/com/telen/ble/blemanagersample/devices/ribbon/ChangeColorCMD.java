@@ -1,4 +1,4 @@
-package com.telen.ble.blemanagersample.pending;
+package com.telen.ble.blemanagersample.devices.ribbon;
 
 import com.telen.ble.sdk.utils.BytesUtils;
 
@@ -7,7 +7,7 @@ import java.util.Map;
 public class ChangeColorCMD extends DevicesCMD {
 
     @Override
-    byte[] getHexDataArray(Map<String, Integer> data) {
+    public byte[] getHexDataArray(Map<String, Integer> data) {
 
         byte[] bytes = new byte[8];
         bytes[0] = (byte)0x31; // subroutine

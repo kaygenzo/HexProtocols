@@ -8,4 +8,5 @@
 
     <string name="button_title_light_on">Light On</string>
     <string name="button_title_light_off">Light Off</string>
+    <string name="button_title_color_picker">Color picker</string>
 </resources>

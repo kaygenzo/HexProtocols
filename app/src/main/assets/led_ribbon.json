@@ -1,0 +1,157 @@
+{
+  "deviceNames": ["LED"],
+  "commands": [
+    {
+      "identifier": "LIGHT_ON",
+      "request": {
+        "port": 5577,
+        "address": "192.168.1.93",
+        "length": 4,
+        "payloads": [
+          {
+            "name": "SUBROUTINE",
+            "start": 0,
+            "end": 0,
+            "type": "HEX",
+            "value": "0x71"
+          },
+          {
+            "name": "COMMAND",
+            "start": 1,
+            "end": 1,
+            "type": "HEX",
+            "value": "0x23"
+          },
+          {
+            "name": "OPTION",
+            "start": 2,
+            "end": 2,
+            "type": "HEX",
+            "value": "0x0F"
+          },
+          {
+            "name": "CHECKSUM",
+            "start": 3,
+            "end": 3,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          }
+        ]
+      },
+      "response": {
+      }
+    },
+    {
+      "identifier": "LIGHT_OFF",
+      "request": {
+        "port": 5577,
+        "address": "192.168.1.93",
+        "length": 4,
+        "payloads": [
+          {
+            "name": "SUBROUTINE",
+            "start": 0,
+            "end": 0,
+            "type": "HEX",
+            "value": "0x71"
+          },
+          {
+            "name": "COMMAND",
+            "start": 1,
+            "end": 1,
+            "type": "HEX",
+            "value": "0x24"
+          },
+          {
+            "name": "OPTION",
+            "start": 2,
+            "end": 2,
+            "type": "HEX",
+            "value": "0x0F"
+          },
+          {
+            "name": "CHECKSUM",
+            "start": 3,
+            "end": 3,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          }
+        ]
+      },
+      "response": {
+      }
+    },
+    {
+      "identifier": "CHANGE_COLOR",
+      "request": {
+        "port": 5577,
+        "address": "192.168.1.93",
+        "length": 8,
+        "payloads": [
+          {
+            "name": "SUBROUTINE",
+            "start": 0,
+            "end": 0,
+            "type": "HEX",
+            "value": "0x31"
+          },
+          {
+            "name": "RED",
+            "start": 1,
+            "end": 1,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          },
+          {
+            "name": "GREEN",
+            "start": 2,
+            "end": 2,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          },
+          {
+            "name": "BLUE",
+            "start": 3,
+            "end": 3,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          },
+          {
+            "name": "UNKNOWN_1",
+            "start": 4,
+            "end": 4,
+            "type": "INTEGER",
+            "value": 0
+          },
+          {
+            "name": "UNKNOWN_2",
+            "start": 5,
+            "end": 5,
+            "type": "INTEGER",
+            "value": 0
+          },
+          {
+            "name": "OPTION",
+            "start": 6,
+            "end": 6,
+            "type": "HEX",
+            "value": "0x0F"
+          },
+          {
+            "name": "CHECKSUM",
+            "start": 7,
+            "end": 7,
+            "type": "INTEGER",
+            "min": 0,
+            "max": 255
+          }
+        ]
+      }
+    }
+  ]
+}
