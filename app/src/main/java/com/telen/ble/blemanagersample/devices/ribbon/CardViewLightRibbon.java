@@ -13,7 +13,7 @@ import android.widget.TextView;
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 import com.telen.ble.blemanagersample.R;
-import com.telen.ble.blemanagersample.pending.ColorUtils;
+import com.telen.sdk.common.utils.ColorUtils;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;

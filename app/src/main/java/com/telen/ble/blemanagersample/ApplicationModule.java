@@ -2,37 +2,39 @@ package com.telen.ble.blemanagersample;
 
 import android.content.Context;
 
-import com.telen.ble.blemanagersample.pending.SocketHardwareConnectionLayer;
-import com.telen.ble.blemanagersample.pending.TCPSocketManager;
-import com.telen.ble.sdk.builder.HexBuilder;
-import com.telen.ble.sdk.layers.DataLayerInterface;
-import com.telen.ble.sdk.layers.impl.DataLayerImpl;
-import com.telen.ble.sdk.validator.DataValidator;
+import com.telen.ble.sdk.di.BleDaggerWrapper;
+import com.telen.ble.sdk.layers.impl.BleHardwareConnectionLayer;
+import com.telen.sdk.common.layers.DataLayerInterface;
+import com.telen.sdk.socket.di.SocketDaggerWrapper;
+import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
 
 import dagger.Module;
 import dagger.Provides;
-import okhttp3.OkHttpClient;
 
 @Module
 public class ApplicationModule {
 
-    @Provides
-    public DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer(SocketHardwareConnectionLayer hardwareLayer, DataValidator dataValidator, HexBuilder hexBuilder) {
-        return new DataLayerImpl<>(hardwareLayer, dataValidator, hexBuilder);
+    private Context context;
+
+    public ApplicationModule(Context context) {
+        this.context = context;
     }
 
     @Provides
-    public SocketHardwareConnectionLayer provideSocketHardwareLayer(Context context, OkHttpClient okHttpClient, TCPSocketManager tcpSocketManager) {
-        return new SocketHardwareConnectionLayer(context, okHttpClient, tcpSocketManager);
+    @ApplicationScope
+    public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(Context context) {
+        return BleDaggerWrapper.getComponent(context).provideDataLayer();
     }
 
     @Provides
-    public OkHttpClient provideHttpClient() {
-        return new OkHttpClient();
+    @ApplicationScope
+    public DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer(Context context) {
+        return SocketDaggerWrapper.getComponent(context).provideSocketDataLayer();
     }
 
     @Provides
-    public TCPSocketManager provideTcpSocketManager() {
-        return new TCPSocketManager();
+    @ApplicationScope
+    public Context provideContext() {
+        return context;
     }
 }

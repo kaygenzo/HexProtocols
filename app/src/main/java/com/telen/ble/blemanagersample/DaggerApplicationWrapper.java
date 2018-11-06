@@ -2,8 +2,6 @@ package com.telen.ble.blemanagersample;
 
 import android.content.Context;
 
-import com.telen.ble.sdk.di.DaggerWrapper;
-
 public class DaggerApplicationWrapper {
 
     private static ApplicationComponent mComponent;
@@ -16,10 +14,10 @@ public class DaggerApplicationWrapper {
     }
 
     private static void initComponent (Context context) {
+
         mComponent = DaggerApplicationComponent
                 .builder()
-                .libraryComponent(DaggerWrapper.getComponent(context))
-                .applicationModule(new ApplicationModule())
+                .applicationModule(new ApplicationModule(context))
                 .build();
     }
 }

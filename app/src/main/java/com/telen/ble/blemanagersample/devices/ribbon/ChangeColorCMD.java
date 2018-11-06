@@ -1,6 +1,6 @@
 package com.telen.ble.blemanagersample.devices.ribbon;
 
-import com.telen.ble.sdk.utils.BytesUtils;
+import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.Map;
 

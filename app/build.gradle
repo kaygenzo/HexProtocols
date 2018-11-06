@@ -68,28 +68,20 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.0'
-    implementation project(':bleProtocolSdk')
     implementation 'com.android.support:recyclerview-v7:27.1.1'
     implementation 'com.android.support:cardview-v7:27.1.1'
     implementation 'com.android.support:multidex:1.0.3'
-
     implementation 'com.google.dagger:dagger:2.16'
     annotationProcessor 'com.google.dagger:dagger-compiler:2.16'
+
+    implementation 'com.google.code.gson:gson:2.7'
+
     implementation('com.crashlytics.sdk.android:crashlytics:2.9.5@aar') {
         transitive = true
     }
     implementation files('libs/bcprov-jdk15on-160.jar')
-
-    //retrofit
-    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
-    //JSON Parsing
-    implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
-    //Retrofit to rx
-    implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofitVersion"
-    implementation 'com.google.code.gson:gson:2.7'
-
-    //http logging
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.6.0'
-
     implementation 'com.github.QuadFlask:colorpicker:0.0.13'
+    implementation project(':commonProtocolSdk')
+    implementation project(':bleProtocolSdk')
+    implementation project(':socketProtocolSdk')
 }

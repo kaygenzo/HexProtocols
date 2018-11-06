@@ -1,6 +1,6 @@
 package com.telen.ble.blemanagersample;
 
-import com.telen.ble.sdk.model.DeviceType;
+import com.telen.sdk.common.models.DeviceType;
 
 public enum DeviceInfo {
     MINGER(DeviceType.LIGHTBULB, "minger.json"),

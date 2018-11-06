@@ -2,7 +2,7 @@ package com.telen.ble.blemanagersample.devices.ribbon;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.telen.ble.sdk.utils.BytesUtils;
+import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.Map;
 

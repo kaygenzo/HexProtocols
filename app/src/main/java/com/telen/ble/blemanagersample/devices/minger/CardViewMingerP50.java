@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 import com.telen.ble.blemanagersample.Constants;
 import com.telen.ble.blemanagersample.R;
-import com.telen.ble.sdk.model.Device;
+import com.telen.sdk.common.models.Device;
 
 import io.reactivex.CompletableObserver;
 import io.reactivex.Observer;

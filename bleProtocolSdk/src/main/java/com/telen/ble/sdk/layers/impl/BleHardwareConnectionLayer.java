@@ -16,11 +16,11 @@ import com.polidea.rxandroidble2.Timeout;
 import com.polidea.rxandroidble2.scan.ScanFilter;
 import com.polidea.rxandroidble2.scan.ScanResult;
 import com.polidea.rxandroidble2.scan.ScanSettings;
-import com.telen.ble.sdk.model.Device;
-import com.telen.ble.sdk.layers.HardwareLayerInterface;
-import com.telen.ble.sdk.model.Request;
-import com.telen.ble.sdk.model.Response;
-import com.telen.ble.sdk.utils.BytesUtils;
+import com.telen.sdk.common.layers.HardwareLayerInterface;
+import com.telen.sdk.common.models.Device;
+import com.telen.sdk.common.models.Request;
+import com.telen.sdk.common.models.Response;
+import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.HashMap;
 import java.util.Map;

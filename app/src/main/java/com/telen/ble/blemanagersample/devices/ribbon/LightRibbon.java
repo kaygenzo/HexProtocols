@@ -5,13 +5,13 @@ import android.util.Log;
 
 import com.telen.ble.blemanagersample.DaggerApplicationWrapper;
 import com.telen.ble.blemanagersample.DeviceInfo;
-import com.telen.ble.blemanagersample.GenericWifiDevice;
-import com.telen.ble.blemanagersample.pending.SocketHardwareConnectionLayer;
-import com.telen.ble.sdk.layers.DataLayerInterface;
-import com.telen.ble.sdk.model.Device;
-import com.telen.ble.sdk.model.DeviceConfiguration;
-import com.telen.ble.sdk.model.ProtocolConfiguration;
-import com.telen.ble.sdk.utils.BytesUtils;
+import com.telen.sdk.common.layers.DataLayerInterface;
+import com.telen.sdk.common.models.Device;
+import com.telen.sdk.common.models.DeviceConfiguration;
+import com.telen.sdk.common.models.ProtocolConfiguration;
+import com.telen.sdk.common.utils.BytesUtils;
+import com.telen.sdk.socket.devices.GenericNetworkDevice;
+import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,9 +34,8 @@ import io.reactivex.Single;
 import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.OkHttpClient;
 
-public class LightRibbon implements GenericWifiDevice {
+public class LightRibbon implements GenericNetworkDevice {
 
     private static final String TAG = LightRibbon.class.getSimpleName();
 
@@ -50,11 +49,9 @@ public class LightRibbon implements GenericWifiDevice {
 //    private static final String MAC_ADDRESS = "DC4F22C0D904";
 
     private DatagramSocket mSocket;
-    private final OkHttpClient mOkHttpClient;
 
     public LightRibbon(Context context) {
         DaggerApplicationWrapper.getComponent(context).inject(this);
-        this.mOkHttpClient = new OkHttpClient();
         deviceConfiguration = ProtocolConfiguration.parse(context, DeviceInfo.RIBBON.getProtocolPath());
     }
 

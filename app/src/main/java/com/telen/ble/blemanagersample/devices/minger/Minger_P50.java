@@ -5,12 +5,11 @@ import android.content.Context;
 import com.telen.ble.blemanagersample.DaggerApplicationWrapper;
 import com.telen.ble.blemanagersample.DeviceInfo;
 import com.telen.ble.sdk.devices.GenericBleDevice;
-import com.telen.ble.sdk.layers.DataLayerInterface;
 import com.telen.ble.sdk.layers.impl.BleHardwareConnectionLayer;
-import com.telen.ble.sdk.layers.impl.DataLayerImpl;
-import com.telen.ble.sdk.model.Device;
-import com.telen.ble.sdk.model.DeviceConfiguration;
-import com.telen.ble.sdk.model.ProtocolConfiguration;
+import com.telen.sdk.common.layers.DataLayerInterface;
+import com.telen.sdk.common.models.Device;
+import com.telen.sdk.common.models.DeviceConfiguration;
+import com.telen.sdk.common.models.ProtocolConfiguration;
 
 import java.util.HashMap;
 import java.util.Map;
