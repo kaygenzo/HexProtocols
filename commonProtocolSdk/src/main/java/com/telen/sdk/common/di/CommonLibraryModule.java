@@ -2,7 +2,7 @@ package com.telen.sdk.common.di;
 
 import android.content.Context;
 
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.models.ResponseFrameFactory;
 import com.telen.sdk.common.validator.DataValidator;
 
@@ -32,8 +32,8 @@ public class CommonLibraryModule {
 
     @Provides
     @CommonScope
-    public HexBuilder provideHexBuilder() {
-        return new HexBuilder();
+    public CommandBuilder provideHexBuilder() {
+        return new CommandBuilder();
     }
 
     @Provides

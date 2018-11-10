@@ -1,2 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.telen.sdk.socket" />
+    package="com.telen.sdk.socket" >
+
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+</manifest>

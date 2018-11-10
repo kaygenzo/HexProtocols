@@ -6,25 +6,21 @@ import android.util.Log;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
 import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.Request;
+import com.telen.sdk.common.models.RequestType;
 import com.telen.sdk.common.models.Response;
 import com.telen.sdk.common.utils.BytesUtils;
+import com.telen.sdk.socket.devices.SocketDevice;
 import com.telen.sdk.socket.utils.TCPSocketManager;
+import com.telen.sdk.socket.utils.UDPSocketManager;
 
-import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Enumeration;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleOnSubscribe;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -33,136 +29,171 @@ import okhttp3.OkHttpClient;
 public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private static final String TAG = SocketHardwareConnectionLayer.class.getSimpleName();
-    private static final long TIMEOUT_RESPONSE_MILLIS = 3000L;
 
-    private DatagramSocket mDatagramSocket;
     private Socket mSocket;
+    private DatagramSocket datagramSocket;
+
     private Context mContext;
     private final OkHttpClient mHttpClient;
     private TCPSocketManager tcpSocketManager;
+    private UDPSocketManager udpSocketManager;
 
     private CompositeDisposable operationsDisposable = new CompositeDisposable();
 
-    public SocketHardwareConnectionLayer(Context context, OkHttpClient okHttpClient, TCPSocketManager tcpSocketManager) {
+    public SocketHardwareConnectionLayer(Context context, OkHttpClient okHttpClient, TCPSocketManager tcpSocketManager, UDPSocketManager udpSocketManager) {
         this.mContext = context;
         this.mHttpClient = okHttpClient;
         this.tcpSocketManager = tcpSocketManager;
+        this.udpSocketManager = udpSocketManager;
     }
 
     @Override
-    public Completable connect(Device device, boolean createBond) {
-        return null;
+    public Completable connect(@NonNull Device device, boolean bind) {
+        return Completable.create(emitter -> {
+            SocketDevice socketDevice = (SocketDevice)device;
+
+            operationsDisposable.clear();
+
+                RequestType requestType = socketDevice.getType();
+                switch (requestType) {
+                    case tcp:
+                        int port = socketDevice.getPort();
+                        String address = socketDevice.getAddress();
+
+                        if(mSocket!=null && mSocket.isConnected())
+                            mSocket.close();
+
+                        try {
+                            mSocket = mHttpClient.socketFactory().createSocket(Inet4Address.getByName(address), port);
+                            emitter.onComplete();
+                        } catch (Exception e) {
+                            emitter.onError(e);
+                        }
+                        break;
+                    case udp:
+                        if(datagramSocket!=null)
+                            datagramSocket.close();
+
+                        try {
+                            datagramSocket =  new DatagramSocket();
+                            emitter.onComplete();
+                        }
+                        catch (Exception e) {
+                            emitter.onError(e);
+                            return;
+                        }
+                        break;
+                }
+        }).subscribeOn(Schedulers.io());
     }
 
     @Override
     public Completable disconnect(Device device) {
-        return null;
+        return Completable.create(emitter -> {
+            if(mSocket!=null && mSocket.isConnected())
+                mSocket.close();
+            if(datagramSocket!=null)
+                datagramSocket.close();
+            emitter.onComplete();
+        });
     }
 
+    //TODO imagine a way to determine how to transform into bytes array
     @Override
     public Single<String> sendCommand(Device device, Request request, String command) {
-        return sendCommand(device, request, BytesUtils.hexStringToByteArray(command));
+        try {
+            RequestType requestType = RequestType.valueOf(request.getType());
+            if(requestType == RequestType.tcp)
+                return sendTCPCommand(request, BytesUtils.hexStringToByteArray(command))
+                        .andThen(Single.just("Done"));
+            else {
+                Log.d(TAG, "command["+command+"]");
+                return sendUDPRequest(command.getBytes(), request)
+                        .andThen(Single.just("Done"));
+            }
+        }
+        catch (IllegalArgumentException e) {
+            return Single.error(e);
+        }
     }
 
     @Override
     public Single<String> sendCommand(Device device, Request request, byte[] command) {
-        return sendTCPCommand(request, command).andThen(Single.just("Done"));
+        //TODO for now it's not used by the datalayer, but could be in the future
+        return null;
     }
 
     @Override
     public Observable<String> listenResponses(Device device, Response response) {
-        return listenTCPResponse();
+        try {
+            RequestType requestType = RequestType.valueOf(response.getType());
+            if(requestType == RequestType.tcp)
+                return listenTCPResponse();
+            else
+                return listenUDPResponse().toObservable();
+        }
+        catch (IllegalArgumentException e) {
+            return Observable.error(e);
+        }
     }
 
     @Override
     public Single<Device> scan(String deviceName) {
+        //TODO define what is the purpose of this scan
         return null;
     }
 
     @Override
-    public Single<Device> scanOld(String deviceName) {
-        return null;
-    }
-
-    @Override
-    public Single<Boolean> isBonded(String macAddress) {
-        return null;
-    }
-
-    @Override
-    public Completable preProcessBeforeSendingCommand(Request request) {
-        return Completable.create(emitter -> {
-            int port = request.getPort();
-            String address = request.getAddress();
-
-            operationsDisposable.clear();
-
-            if(mSocket!=null && mSocket.isConnected())
-                mSocket.close();
-
-            try {
-                mSocket = mHttpClient.socketFactory().createSocket(Inet4Address.getByName(address), port);
-                emitter.onComplete();
-            }catch (UnknownHostException e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(Schedulers.io());
+    public Completable prepareBeforeSendingCommand(Request request) {
+        return Completable.complete();
     }
 
     ////////////////////// UDP /////////////////////
 
-    private Single<String> listenResponse(int bufferSize) {
-        return Single.create((SingleOnSubscribe<String>) emitter -> {
-            byte[] buffer = new byte[bufferSize];
-            DatagramPacket packet = new DatagramPacket(buffer, bufferSize);
-            String currentAddress = getCurrentIPAddress();
-            String message;
-            do {
-                mDatagramSocket.receive(packet);
-                message = new String(packet.getData(), 0, packet.getLength());
-            } while (packet.getAddress().getHostAddress().contains(currentAddress));
-            emitter.onSuccess(message);
-        }).timeout(TIMEOUT_RESPONSE_MILLIS, TimeUnit.MILLISECONDS);
-    }
-
-    private Observable<String> sendRequest(final byte[] message, final String address, final int port, boolean isBroadcast, boolean waitForResponse) {
-        return Observable.create(emitter -> {
-            mDatagramSocket.setBroadcast(isBroadcast);
-            DatagramPacket packet = new DatagramPacket(message, message.length, InetAddress.getByName(address), port);
-            mDatagramSocket.send(packet);
-            if(waitForResponse) {
-                listenResponse(2048)
+    private Single<String> listenUDPResponse() {
+        return Single.create(emitter -> {
+            if(datagramSocket!=null) {
+                Disposable  disposable = udpSocketManager.listenResponse(datagramSocket, 2048)
                         .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
                         .subscribe(s -> {
-                            emitter.onNext(s);
-                            emitter.onComplete();
-                        }, emitter::onError);
+                            if(!emitter.isDisposed()) {
+                                emitter.onSuccess(s);
+                            }
+                        }, throwable -> {
+                            if(!emitter.isDisposed())
+                                emitter.onError(throwable);
+                        });
+                operationsDisposable.add(disposable);
             }
-            else
-                emitter.onComplete();
+            else {
+                emitter.onError(new Exception("Socket not ready!"));
+            }
         });
     }
 
-    private String getCurrentIPAddress()
-    {
-        try
-        {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();)
-            {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();)
-                {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress())
-                        return inetAddress.getHostAddress();
-                }
+    private Completable sendUDPRequest(final byte[] message, Request request) {
+        return Completable.create(emitter -> {
+            if(datagramSocket!=null) {
+                Disposable sendDisposable = udpSocketManager.sendRequest(datagramSocket,message, request.getAddress(), request.getPort(), request.isBroadcast())
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(Schedulers.io())
+                        .subscribe(() -> {
+                            if(!emitter.isDisposed()) {
+                                Log.d(TAG, "sendUDPMessage complete");
+                                emitter.onComplete();
+                            }
+                        }, throwable -> {
+                            if(!emitter.isDisposed()) {
+                                Log.e(TAG, "", throwable);
+                                emitter.onError(throwable);
+                            }
+                        });
+                operationsDisposable.add(sendDisposable);
             }
-        }
-        catch (SocketException e)
-        {
-            e.printStackTrace();
-        }
-        return null;
+            else
+                emitter.onError(new Exception("Null datagram socket for address "+request.getAddress()+" and port "+request.getPort()+" !"));
+        });
     }
 
     ////////////////////// TCP /////////////////////

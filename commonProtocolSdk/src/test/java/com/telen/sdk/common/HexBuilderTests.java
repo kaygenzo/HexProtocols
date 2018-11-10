@@ -1,6 +1,6 @@
 package com.telen.sdk.common;
 
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.models.Payload;
 import com.telen.sdk.common.models.PayloadType;
 
@@ -27,7 +27,7 @@ import io.reactivex.schedulers.Schedulers;
 public class HexBuilderTests {
 
     @Mock
-    HexBuilder hexBuilder;
+    CommandBuilder commandBuilder;
     private TestObserver observer = new TestObserver();
     private List<Payload> payloads;
 
@@ -46,7 +46,7 @@ public class HexBuilderTests {
 
     @Before
     public void setup() {
-        hexBuilder = new HexBuilder();
+        commandBuilder = new CommandBuilder();
 
         payloads = new ArrayList<>();
 
@@ -160,7 +160,7 @@ public class HexBuilderTests {
         data.put("BLUE", 0);
 
         TestObserver<String> observer = new TestObserver<>();
-        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
+        commandBuilder.dataCommandBuilder(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals("01fe0000538310000000FF005002020000000000".toLowerCase(), observer.values().get(0).toLowerCase());
@@ -204,7 +204,7 @@ public class HexBuilderTests {
         data.put("PAYLOAD_4", 0xFFFF);
 
         TestObserver<String> observer = new TestObserver<>();
-        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
+        commandBuilder.dataCommandBuilder(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals("3F3E0000000100020000FFFF0000000000000000".toLowerCase(), observer.values().get(0).toLowerCase());
@@ -218,7 +218,7 @@ public class HexBuilderTests {
         data.put("GREEN", 255);
         data.put("BLUE", 125);
 
-        hexBuilder.buildHexaCommand(payloads, data, 20).subscribe(observer);
+        commandBuilder.dataCommandBuilder(payloads, data, 20).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
         Assert.assertEquals(observer.values().get(0),"ffffffff7dff7d0bcdefghijklmnopqrstuvwxyz");

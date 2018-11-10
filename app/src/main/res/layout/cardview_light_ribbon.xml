@@ -36,13 +36,31 @@
             app:layout_constraintTop_toTopOf="parent"/>
 
         <Button
-            android:id="@+id/connect"
+            android:id="@+id/connect_tcp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button_title_connect"
+            android:text="@string/button_title_connect_tcp"
             app:layout_constraintLeft_toLeftOf="@+id/light_on"
             app:layout_constraintRight_toRightOf="@+id/light_on"
             app:layout_constraintTop_toBottomOf="@+id/light_on"/>
+
+        <Button
+            android:id="@+id/connect_udp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_title_connect_udp"
+            app:layout_constraintLeft_toLeftOf="@+id/connect_tcp"
+            app:layout_constraintRight_toRightOf="@+id/connect_tcp"
+            app:layout_constraintTop_toBottomOf="@+id/connect_tcp"/>
+
+        <Button
+            android:id="@+id/scan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_title_scan"
+            app:layout_constraintLeft_toLeftOf="@+id/connect_udp"
+            app:layout_constraintRight_toRightOf="@+id/connect_udp"
+            app:layout_constraintTop_toBottomOf="@+id/connect_udp"/>
 
         <Button
             android:id="@+id/light_off"
@@ -62,12 +80,21 @@
             app:layout_constraintRight_toRightOf="@+id/light_off"
             app:layout_constraintTop_toBottomOf="@+id/light_off"/>
 
+        <Button
+            android:id="@+id/disconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_title_disconnect"
+            app:layout_constraintLeft_toLeftOf="@+id/color_picker"
+            app:layout_constraintRight_toRightOf="@+id/color_picker"
+            app:layout_constraintTop_toBottomOf="@+id/color_picker"/>
+
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/connect">
+            app:layout_constraintTop_toBottomOf="@+id/scan">
 
             <SeekBar
                 android:id="@+id/red"

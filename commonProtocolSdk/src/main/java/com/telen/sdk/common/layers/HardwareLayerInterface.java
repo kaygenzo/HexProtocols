@@ -9,13 +9,11 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 
 public interface HardwareLayerInterface {
-    Completable connect(Device device, boolean createBond);
+    Completable connect(Device device, boolean bind);
     Completable disconnect(Device device);
     Single<String> sendCommand(Device device, Request request, String command);
     Single<String> sendCommand(Device device, Request request, byte[] command);
     Observable<String> listenResponses(Device device, Response response);
     Single<Device> scan(String deviceName);
-    Single<Device> scanOld(String deviceName);
-    Single<Boolean> isBonded(String macAddress);
-    Completable preProcessBeforeSendingCommand(Request request);
+    Completable prepareBeforeSendingCommand(Request request);
 }

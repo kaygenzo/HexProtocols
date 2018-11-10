@@ -4,6 +4,7 @@
     {
       "identifier": "LIGHT_ON",
       "request": {
+        "type": "tcp",
         "port": 5577,
         "address": "192.168.1.93",
         "length": 4,
@@ -40,11 +41,13 @@
         ]
       },
       "response": {
+        "type": "tcp"
       }
     },
     {
       "identifier": "LIGHT_OFF",
       "request": {
+        "type": "tcp",
         "port": 5577,
         "address": "192.168.1.93",
         "length": 4,
@@ -81,11 +84,13 @@
         ]
       },
       "response": {
+        "type": "tcp"
       }
     },
     {
       "identifier": "CHANGE_COLOR",
       "request": {
+        "type": "tcp",
         "port": 5577,
         "address": "192.168.1.93",
         "length": 8,
@@ -151,6 +156,134 @@
             "max": 255
           }
         ]
+      }
+    },
+    {
+      "identifier": "GET_REMOTE_ADDRESS",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "address": "10.10.123.255",
+        "isBroadcast": true,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "HF-A11ASSISTHREAD"
+          }
+        ]
+      },
+      "response": {
+        "type": "udp"
+      }
+    },
+    {
+      "identifier": "SEND_ACK",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "+ok"
+          }
+        ]
+      }
+    },
+    {
+      "identifier": "SEND_SSID",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "AT+WSSSID="
+          },
+          {
+            "name": "SSID",
+            "type": "ASCII"
+          },
+          {
+            "name": "END",
+            "type": "ASCII",
+            "value": "\r"
+          }
+        ]
+      },
+      "response": {
+        "type": "udp"
+      }
+    },
+    {
+      "identifier": "SEND_WSKEY",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "AT+WSKEY=WPA2PSK,AES,"
+          },
+          {
+            "name": "PASSWORD",
+            "type": "ASCII"
+          },
+          {
+            "name": "END",
+            "type": "ASCII",
+            "value": "\r"
+          }
+        ]
+      },
+      "response": {
+        "type": "udp"
+      }
+    },
+    {
+      "identifier": "CHANGE_MODE",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "AT+WMODE="
+          },
+          {
+            "name": "MODE",
+            "type": "ASCII"
+          },
+          {
+            "name": "END",
+            "type": "ASCII",
+            "value": "\r"
+          }
+        ]
+      },
+      "response": {
+        "type": "udp"
+      }
+    },
+    {
+      "identifier": "REBOOT",
+      "request": {
+        "type": "udp",
+        "port": 48899,
+        "payloads": [
+          {
+            "name": "MESSAGE",
+            "type": "ASCII",
+            "value": "AT+Z\r"
+          }
+        ]
+      },
+      "response": {
+        "type": "udp"
       }
     }
   ]

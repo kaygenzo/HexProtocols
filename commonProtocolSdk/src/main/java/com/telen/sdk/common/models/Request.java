@@ -38,6 +38,10 @@ public class Request {
     @Expose
     private boolean isBroadcast;
 
+    @SerializedName("type")
+    @Expose
+    private String type;
+
     public String getService() {
         return service;
     }
@@ -82,7 +86,19 @@ public class Request {
         return port;
     }
 
+    public void setPort(int port) {
+        this.port = port;
+    }
+
     public boolean isBroadcast() {
         return isBroadcast;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 }

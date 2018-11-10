@@ -7,6 +7,7 @@ import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.socket.di.SocketDaggerWrapper;
 import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
+import com.telen.sdk.socket.utils.NetworkUtils;
 
 import dagger.Module;
 import dagger.Provides;
@@ -36,5 +37,11 @@ public class ApplicationModule {
     @ApplicationScope
     public Context provideContext() {
         return context;
+    }
+
+    @Provides
+    @ApplicationScope
+    public NetworkUtils provideNetworkUtils() {
+        return SocketDaggerWrapper.getComponent(context).provideNetworkUtils();
     }
 }

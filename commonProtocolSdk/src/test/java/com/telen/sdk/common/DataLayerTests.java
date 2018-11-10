@@ -2,7 +2,7 @@ package com.telen.sdk.common;
 
 import android.util.Log;
 
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.exceptions.CommandTimeoutException;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
 import com.telen.sdk.common.layers.impl.DataLayerImpl;
@@ -49,7 +49,7 @@ public class DataLayerTests {
     private DataLayerImpl<HardwareLayerInterface> datalayer;
     @Mock HardwareLayerInterface hardwareLayer;
     @Mock DataValidator dataValidator;
-    @Mock HexBuilder mockHexBuilder;
+    @Mock CommandBuilder mockCommandBuilder;
 
     private List<Payload> payloads;
     private Device expectedDevice;
@@ -72,7 +72,7 @@ public class DataLayerTests {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        datalayer = new DataLayerImpl(hardwareLayer, dataValidator, mockHexBuilder);
+        datalayer = new DataLayerImpl(hardwareLayer, dataValidator, mockCommandBuilder);
         PowerMockito.mockStatic(Log.class);
 
         payloads = new ArrayList<>();
@@ -122,7 +122,7 @@ public class DataLayerTests {
         command.setRequest(request);
         request.setPayloads(payloads);
 
-        Mockito.when(hardwareLayer.preProcessBeforeSendingCommand(Mockito.any(Request.class))).thenReturn(Completable.complete());
+        Mockito.when(hardwareLayer.prepareBeforeSendingCommand(Mockito.any(Request.class))).thenReturn(Completable.complete());
     }
 
     @Test
@@ -194,7 +194,7 @@ public class DataLayerTests {
         Map<String, Object> data = new HashMap<>();
         Exception e = new Exception("Fake exception");
         Mockito.when(dataValidator.validateData(payloads, data)).thenReturn(Completable.error(e));
-        Mockito.when(mockHexBuilder.buildHexaCommand(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
+        Mockito.when(mockCommandBuilder.dataCommandBuilder(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
         datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(e);
@@ -205,7 +205,7 @@ public class DataLayerTests {
         Map<String, Object> data = new HashMap<>();
         Exception e = new Exception("Fake exception");
         Mockito.when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
-        Mockito.when(mockHexBuilder.buildHexaCommand(payloads, data, command.getRequest().getLength())).thenReturn(Single.error(e));
+        Mockito.when(mockCommandBuilder.dataCommandBuilder(payloads, data, command.getRequest().getLength())).thenReturn(Single.error(e));
         datalayer.sendCommand(expectedDevice, command, data).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(e);
@@ -216,7 +216,7 @@ public class DataLayerTests {
         Map<String, Object> data = new HashMap<>();
         datalayer.setRequestTimeout(-1);
         Mockito.when(dataValidator.validateData(payloads, data)).thenReturn(Completable.complete());
-        Mockito.when(mockHexBuilder.buildHexaCommand(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
+        Mockito.when(mockCommandBuilder.dataCommandBuilder(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
 
         Exception e = new Exception("Fake exception");
         Mockito.when(hardwareLayer.sendCommand(expectedDevice, command.getRequest(), "hexString")).thenReturn(Single.error(e));
@@ -302,7 +302,7 @@ public class DataLayerTests {
 
 
         Mockito.when(dataValidator.validateData(payloads,data)).thenReturn(Completable.complete());
-        Mockito.when(mockHexBuilder.buildHexaCommand(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
+        Mockito.when(mockCommandBuilder.dataCommandBuilder(payloads, data, command.getRequest().getLength())).thenReturn(Single.just("hexString"));
         Mockito.when(hardwareLayer.sendCommand(expectedDevice, command.getRequest(), "hexString")).thenReturn(Single.just("05000000000000000000000000000000000000"));
         Mockito.when(hardwareLayer.listenResponses(expectedDevice, command.getResponse())).thenReturn(Observable.create(emitter -> {
                     emitter.onNext("01000000000000000000000000000000000000");

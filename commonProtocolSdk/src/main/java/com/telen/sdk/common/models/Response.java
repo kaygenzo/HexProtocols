@@ -30,6 +30,10 @@ public class Response {
     @Expose
     private long timeout;
 
+    @SerializedName("type")
+    @Expose
+    private String type;
+
     public String getService() {
         return service;
     }
@@ -76,5 +80,9 @@ public class Response {
 
     public void setTimeout(long timeout) {
         this.timeout = timeout;
+    }
+
+    public String getType() {
+        return type;
     }
 }

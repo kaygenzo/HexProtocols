@@ -15,19 +15,18 @@ import java.util.Map;
 
 import io.reactivex.Single;
 
-public class HexBuilder {
+public class CommandBuilder {
 
-    private static final String TAG = HexBuilder.class.getSimpleName();
-
-    private static final int DEFAULT_COMMAND_LENGTH = 20;
+    private static final String TAG = CommandBuilder.class.getSimpleName();
 
     @RestrictTo(RestrictTo.Scope.LIBRARY)
-    public Single<String> buildHexaCommand(@NonNull List<Payload> payloads, @Nullable Map<String, Object> data, int bytesLength) {
+    public Single<String> dataCommandBuilder(@NonNull List<Payload> payloads, @Nullable Map<String, Object> data, int length) {
         return Single.create(emitter -> {
-            String[] commandArray = new String[bytesLength > 0 ? bytesLength: DEFAULT_COMMAND_LENGTH];
+            String[] commandArray = new String[length > 0 ? length: payloads.size()];
             Arrays.fill(commandArray, "00");
 
-            for (Payload payload: payloads) {
+            for (int index = 0; index < payloads.size() ; index++) {
+                Payload payload = payloads.get(index);
                 String identifier = payload.getName();
                 Object obj = null;
                 if(data != null)
@@ -36,7 +35,7 @@ public class HexBuilder {
                     obj = payload.getValue();
                 int start = payload.getStart();
                 int end = payload.getEnd();
-                StringBuilder hexBuilder = new StringBuilder();
+                StringBuilder commandBuilder = new StringBuilder();
 
                 String payloadTypeString = payload.getType();
                 try {
@@ -45,7 +44,7 @@ public class HexBuilder {
                         case HEX_STRING:
                             //keep value like this
                             String hex = (String) obj;
-                            hexBuilder.append(hex);
+                            commandBuilder.append(hex);
                             break;
                         case INTEGER:
                             //convert integer to hex value
@@ -55,31 +54,34 @@ public class HexBuilder {
                             } else {
                                 integer = Integer.parseInt(obj.toString());
                             }
-                            hexBuilder.append(Integer.toHexString(integer));
+                            commandBuilder.append(Integer.toHexString(integer));
                             break;
                         case LONG:
                             //convert integer to hex value
                             Long longValue = Long.parseLong(obj.toString());
-                            hexBuilder.append(Long.toHexString(longValue));
+                            commandBuilder.append(Long.toHexString(longValue));
                             break;
                         case HEX:
                             try {
                                 Long hexValue = Long.decode(obj.toString());
-                                hexBuilder.append(Long.toHexString(hexValue));
+                                commandBuilder.append(Long.toHexString(hexValue));
                             }
                             catch (NumberFormatException e) {
                                 e.printStackTrace();
                             }
                             break;
+                        case ASCII:
+                            commandArray[index] = (String)obj;
+                            continue;
                         default:
                             Log.d(TAG, "Not managed type "+type+" yet");
                     }
                     //if it's an odd string length, let's add 0 at start to be able to build 2-digits packets
-                    if (hexBuilder.length() % 2 == 1)
-                        hexBuilder.insert(0, '0');
+                    if (commandBuilder.length() % 2 == 1)
+                        commandBuilder.insert(0, '0');
                     //let's cut the hex value into array of 2-digits
                     //String[] splittedValue = hexBuilder.toString().split("(?<=\\G.{2})");
-                    String[] splittedValue = BytesUtils.splitStringByLength(hexBuilder.toString(), 2);
+                    String[] splittedValue = BytesUtils.splitStringByLength(commandBuilder.toString(), 2);
                     for (int i = end, j = splittedValue.length - 1; i >= start && j >= 0; i--, j--) {
                         commandArray[i] = splittedValue[j];
                     }

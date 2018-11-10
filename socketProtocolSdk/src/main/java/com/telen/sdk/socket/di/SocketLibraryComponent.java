@@ -3,6 +3,7 @@ package com.telen.sdk.socket.di;
 import com.telen.sdk.common.di.CommonLibraryComponent;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
+import com.telen.sdk.socket.utils.NetworkUtils;
 
 import dagger.Component;
 
@@ -14,4 +15,5 @@ import dagger.Component;
 @SocketScope
 public interface SocketLibraryComponent {
     DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer();
+    NetworkUtils provideNetworkUtils();
 }

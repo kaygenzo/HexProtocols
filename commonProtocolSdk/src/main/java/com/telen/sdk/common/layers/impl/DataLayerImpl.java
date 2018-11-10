@@ -2,7 +2,7 @@ package com.telen.sdk.common.layers.impl;
 
 import android.util.Log;
 
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.exceptions.CommandTimeoutException;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
@@ -39,29 +39,29 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
     private T hardwareInteractionLayer;
     private DataValidator dataValidator;
-    private HexBuilder hexBuilder;
+    private CommandBuilder commandBuilder;
 
     private long mRequestTimeout = DEFAULT_REQUEST_TIMEOUT_MILLIS;
     private long mResponseTimeout = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
 
-    public DataLayerImpl(T hardwareLayer, DataValidator validator, HexBuilder hexBuilder) {
+    public DataLayerImpl(T hardwareLayer, DataValidator validator, CommandBuilder commandBuilder) {
         this.hardwareInteractionLayer = hardwareLayer;
         this.dataValidator = validator;
-        this.hexBuilder = hexBuilder;
+        this.commandBuilder = commandBuilder;
     }
 
     @Override
     public Single<Device> scan(String deviceName) {
-        return Single.create(emitter -> hardwareInteractionLayer.scanOld(deviceName)
+        return Single.create(emitter -> hardwareInteractionLayer.scan(deviceName)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(emitter::onSuccess, emitter::onError));
     }
 
     @Override
-    public Single<Device> connect(Device device, boolean createBond) {
+    public Single<Device> connect(Device device, boolean bind) {
         return Single.create(emitter ->
-                hardwareInteractionLayer.connect(device, createBond)
+                hardwareInteractionLayer.connect(device, bind)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(() -> emitter.onSuccess(device), emitter::onError)
@@ -80,8 +80,8 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
             dataListenerDisposable.clear();
             //let's validate payloads and build the hexa string command
             dataValidator.validateData(command.getRequest().getPayloads(), data)
-                    .andThen(hardwareInteractionLayer.preProcessBeforeSendingCommand(command.getRequest()))
-                    .andThen(hexBuilder.buildHexaCommand(command.getRequest().getPayloads(), data, command.getRequest().getLength()))
+                    .andThen(hardwareInteractionLayer.prepareBeforeSendingCommand(command.getRequest()))
+                    .andThen(commandBuilder.dataCommandBuilder(command.getRequest().getPayloads(), data, command.getRequest().getLength()))
                     .flatMap(hexaCommand -> {
 
                         if(command.getRequest().getTimeout() > 0)
@@ -161,8 +161,8 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
     }
 
     @Override
-    public Single<Boolean> isBonded(Device device) {
-        return hardwareInteractionLayer.isBonded(device.getMacAddress());
+    public Observable<String> sendCommand(Device device, Command command) {
+        return sendCommand(device, command, null);
     }
 
     private void startTimeout(final ObservableEmitter emitter, final CompositeDisposable disposable, final long timeout, final boolean isCompleteOnTimeout) {

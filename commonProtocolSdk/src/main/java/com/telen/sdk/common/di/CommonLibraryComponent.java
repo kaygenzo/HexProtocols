@@ -2,7 +2,7 @@ package com.telen.sdk.common.di;
 
 import android.content.Context;
 
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.models.ResponseFrameFactory;
 import com.telen.sdk.common.validator.DataValidator;
 
@@ -15,6 +15,6 @@ import dagger.Component;
 public interface CommonLibraryComponent {
     ResponseFrameFactory provideResponseFrameFactory();
     DataValidator provideDataValidator();
-    HexBuilder provideHexBuilder();
+    CommandBuilder provideHexBuilder();
     Context provideContext();
 }

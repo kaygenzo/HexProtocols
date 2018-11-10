@@ -13,9 +13,6 @@ import com.polidea.rxandroidble2.RxBleConnection;
 import com.polidea.rxandroidble2.RxBleDevice;
 import com.polidea.rxandroidble2.RxBleDeviceServices;
 import com.polidea.rxandroidble2.Timeout;
-import com.polidea.rxandroidble2.scan.ScanFilter;
-import com.polidea.rxandroidble2.scan.ScanResult;
-import com.polidea.rxandroidble2.scan.ScanSettings;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
 import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.Request;
@@ -210,46 +207,6 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     public Single<Device> scan(String deviceName) {
         return Single.create(emitter -> {
 
-            final ScanSettings settings = new ScanSettings.Builder()
-                    .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
-                    .build();
-
-            final ScanFilter filter = new ScanFilter.Builder()
-                    .setDeviceName(deviceName)
-                    .build();
-
-            rxBleClient.scanBleDevices(settings, filter)
-                    .firstOrError()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new SingleObserver<ScanResult>() {
-                        @Override
-                        public void onSubscribe(Disposable d) {
-                            dispose(scanDisposable);
-                            scanDisposable = d;
-                        }
-
-                        @Override
-                        public void onSuccess(ScanResult scanResult) {
-                            Device device = new Device(scanResult.getBleDevice().getName(), scanResult.getBleDevice().getMacAddress());
-                            bleDevices.put(device, scanResult.getBleDevice());
-                            dispose(scanDisposable);
-                            emitter.onSuccess(device);
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            emitter.onError(e);
-                        }
-                    });
-        });
-    }
-
-    @Override
-    public Single<Device> scanOld(String deviceName) {
-        return Single.create(emitter -> {
-
             dispose(scanDisposable);
 
             scanDisposable = rxBleClient.scanBleDevices()
@@ -266,6 +223,40 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe();
+
+//            final ScanSettings settings = new ScanSettings.Builder()
+//                    .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)
+//                    .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+//                    .build();
+//
+//            final ScanFilter filter = new ScanFilter.Builder()
+//                    .setDeviceName(deviceName)
+//                    .build();
+//
+//            rxBleClient.scanBleDevices(settings, filter)
+//                    .firstOrError()
+//                    .subscribeOn(Schedulers.io())
+//                    .observeOn(AndroidSchedulers.mainThread())
+//                    .subscribe(new SingleObserver<ScanResult>() {
+//                        @Override
+//                        public void onSubscribe(Disposable d) {
+//                            dispose(scanDisposable);
+//                            scanDisposable = d;
+//                        }
+//
+//                        @Override
+//                        public void onSuccess(ScanResult scanResult) {
+//                            Device device = new Device(scanResult.getBleDevice().getName(), scanResult.getBleDevice().getMacAddress());
+//                            bleDevices.put(device, scanResult.getBleDevice());
+//                            dispose(scanDisposable);
+//                            emitter.onSuccess(device);
+//                        }
+//
+//                        @Override
+//                        public void onError(Throwable e) {
+//                            emitter.onError(e);
+//                        }
+//                    });
         });
     }
 
@@ -279,28 +270,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
     }
 
     @Override
-    public Single<Boolean> isBonded(String macAddress) {
-        return Single.create(emitter -> {
-            if(mBluetoothAdapter==null) {
-                emitter.onError(new Exception("BluetoothAdapter is null, it's not permitted here!"));
-            }
-            else {
-                Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
-                if(bondedDevices!=null && !bondedDevices.isEmpty()) {
-                    for (BluetoothDevice device : bondedDevices) {
-                        if(device.getAddress().equals(macAddress)) {
-                            emitter.onSuccess(Boolean.TRUE);
-                            return;
-                        }
-                    }
-                }
-                emitter.onSuccess(Boolean.FALSE);
-            }
-        });
-    }
-
-    @Override
-    public Completable preProcessBeforeSendingCommand(Request request) {
+    public Completable prepareBeforeSendingCommand(Request request) {
         return Completable.complete();
     }
 
@@ -350,5 +320,25 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
     public Map<Device, RxBleDevice> getBleDevices() {
         return bleDevices;
+    }
+
+    private Single<Boolean> isBonded(String macAddress) {
+        return Single.create(emitter -> {
+            if(mBluetoothAdapter==null) {
+                emitter.onError(new Exception("BluetoothAdapter is null, it's not permitted here!"));
+            }
+            else {
+                Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
+                if(bondedDevices!=null && !bondedDevices.isEmpty()) {
+                    for (BluetoothDevice device : bondedDevices) {
+                        if(device.getAddress().equals(macAddress)) {
+                            emitter.onSuccess(Boolean.TRUE);
+                            return;
+                        }
+                    }
+                }
+                emitter.onSuccess(Boolean.FALSE);
+            }
+        });
     }
 }

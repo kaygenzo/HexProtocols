@@ -12,11 +12,14 @@ import android.widget.TextView;
 
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
+import com.telen.sdk.common.models.RequestType;
 import com.telen.sdk.demo.R;
 import com.telen.sdk.common.utils.ColorUtils;
+import com.telen.sdk.socket.devices.SocketDevice;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class CardViewLightRibbon extends CardView {
 
@@ -25,7 +28,8 @@ public class CardViewLightRibbon extends CardView {
     private LightRibbon lightRibbon;
 
     private TextView information;
-    private Button connect;
+    private Button connect_tcp;
+    private Button connect_udp;
     private Button on;
     private Button off;
     private SeekBar redSlide;
@@ -33,6 +37,9 @@ public class CardViewLightRibbon extends CardView {
     private SeekBar blueSlide;
     private SeekBar luminositySlide;
     private Button colorPicker;
+    private Button scan;
+    private Button disconnect;
+
 
     private CompositeDisposable slideDisposable = new CompositeDisposable();
     private int red;
@@ -64,19 +71,48 @@ public class CardViewLightRibbon extends CardView {
         information = findViewById(R.id.information);
         on = findViewById(R.id.light_on);
         off = findViewById(R.id.light_off);
-        connect = findViewById(R.id.connect);
+        connect_tcp = findViewById(R.id.connect_tcp);
+        connect_udp = findViewById(R.id.connect_udp);
         colorPicker = findViewById(R.id.color_picker);
+        scan = findViewById(R.id.scan);
+        disconnect = findViewById(R.id.disconnect);
 
         lightRibbon = new LightRibbon(getContext());
 
-        connect.setOnClickListener(view -> {
-            lightRibbon.connect(null, false)
+        final SocketDevice mDevice = new SocketDevice(LightRibbon.class.getSimpleName());
+
+        connect_tcp.setOnClickListener(view -> {
+            lightRibbon.connect(mDevice, RequestType.tcp)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe();
+                    .subscribe(device -> {
+                        Log.d(TAG,"connected tcp");
+                    }, throwable -> {
+                        Log.e(TAG,"",throwable);
+                    });
+        });
+
+        connect_udp.setOnClickListener(view -> {
+            lightRibbon.connect(mDevice, RequestType.udp)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(device -> {
+                        Log.d(TAG,"connected udp");
+                    }, throwable -> {
+                        Log.e(TAG,"",throwable);
+                    });
+        });
+
+        disconnect.setOnClickListener(view -> {
+            lightRibbon.disconnect(mDevice)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(() -> {
+                        Log.d(TAG,"Disconnected from all sockets!");
+                    }, throwable -> {
+                        Log.e(TAG,"",throwable);
+                    });
         });
 
         on.setOnClickListener(view -> {
-            lightRibbon.lightOn()
+            lightRibbon.lightOn(mDevice)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(() -> {
 
@@ -86,9 +122,13 @@ public class CardViewLightRibbon extends CardView {
         });
 
         off.setOnClickListener(view -> {
-            lightRibbon.lightOff()
+            lightRibbon.lightOff(mDevice)
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe();
+                    .subscribe(() -> {
+
+                    }, throwable -> {
+                        Log.d(TAG, "", throwable);
+                    });
         });
 
         colorPicker.setOnClickListener(view -> {
@@ -100,12 +140,29 @@ public class CardViewLightRibbon extends CardView {
                     .density(12)
                     .setOnColorSelectedListener(selectedColor -> {
                         int[] rgb = ColorUtils.getRGB(selectedColor);
-                        lightRibbon.changeColor(rgb[0], rgb[1], rgb[2])
+                        lightRibbon.changeColor(mDevice, rgb[0], rgb[1], rgb[2])
                                 .observeOn(AndroidSchedulers.mainThread())
-                                .subscribe();
+                                .subscribe(() -> {
+
+                                }, throwable -> {
+                                    Log.d(TAG, "", throwable);
+                                });
                     })
                     .build()
                     .show();
+        });
+
+        scan.setOnClickListener(view -> {
+            lightRibbon.scan()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(device -> {
+                        SocketDevice socketDevice = (SocketDevice)device;
+                        mDevice.setAddress(socketDevice.getAddress());
+                        Log.d(TAG,mDevice.toString());
+                    }, throwable -> {
+                        Log.e(TAG,"", throwable);
+                    });
         });
 
         redSlide.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -121,9 +178,13 @@ public class CardViewLightRibbon extends CardView {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                lightRibbon.changeColor(red, green, blue)
+                lightRibbon.changeColor(mDevice, red, green, blue)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
+                        .subscribe(() -> {
+
+                        }, throwable -> {
+                            Log.d(TAG, "", throwable);
+                        });
             }
         });
 
@@ -140,9 +201,13 @@ public class CardViewLightRibbon extends CardView {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                lightRibbon.changeColor(red, green, blue)
+                lightRibbon.changeColor(mDevice, red, green, blue)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
+                        .subscribe(() -> {
+
+                        }, throwable -> {
+                            Log.d(TAG, "", throwable);
+                        });
             }
         });
 
@@ -159,9 +224,13 @@ public class CardViewLightRibbon extends CardView {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                lightRibbon.changeColor(red, green, blue)
+                lightRibbon.changeColor(mDevice, red, green, blue)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
+                        .subscribe(() -> {
+
+                        }, throwable -> {
+                            Log.d(TAG, "", throwable);
+                        });
             }
         });
 

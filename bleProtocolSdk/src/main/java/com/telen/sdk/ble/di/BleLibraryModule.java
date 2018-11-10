@@ -6,7 +6,7 @@ import android.content.Context;
 
 import com.polidea.rxandroidble2.RxBleClient;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
-import com.telen.sdk.common.builder.HexBuilder;
+import com.telen.sdk.common.builder.CommandBuilder;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.common.layers.impl.DataLayerImpl;
 import com.telen.sdk.common.validator.DataValidator;
@@ -19,8 +19,8 @@ public class BleLibraryModule {
 
     @Provides
     @BleScope
-    public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(BleHardwareConnectionLayer hardwareLayer, DataValidator dataValidator, HexBuilder hexBuilder) {
-        return new DataLayerImpl<>(hardwareLayer, dataValidator, hexBuilder);
+    public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(BleHardwareConnectionLayer hardwareLayer, DataValidator dataValidator, CommandBuilder commandBuilder) {
+        return new DataLayerImpl<>(hardwareLayer, dataValidator, commandBuilder);
     }
 
     @Provides
