@@ -9,4 +9,5 @@ public interface GenericDevice {
     Single<Device> scan();
     Single<Device> connect(Device device, boolean bind);
     Completable disconnect(Device device);
+    Single<Boolean> isConnected(Device device);
 }

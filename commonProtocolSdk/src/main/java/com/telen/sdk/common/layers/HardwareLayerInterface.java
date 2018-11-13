@@ -16,4 +16,5 @@ public interface HardwareLayerInterface {
     Observable<String> listenResponses(Device device, Response response);
     Single<Device> scan(String deviceName);
     Completable prepareBeforeSendingCommand(Request request);
+    Single<Boolean> isConnected(Device device);
 }

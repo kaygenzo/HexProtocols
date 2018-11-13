@@ -148,6 +148,27 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
         return Completable.complete();
     }
 
+    @Override
+    public Single<Boolean> isConnected(Device device) {
+        return Single.create(emitter -> {
+            SocketDevice socketDevice = (SocketDevice)device;
+            switch (socketDevice.getType()) {
+                case tcp:
+                    if(mSocket!=null && mSocket.isConnected())
+                        emitter.onSuccess(Boolean.TRUE);
+                    else
+                        emitter.onSuccess(Boolean.FALSE);
+                        break;
+                case udp:
+                    if(datagramSocket!=null && datagramSocket.isConnected())
+                        emitter.onSuccess(Boolean.TRUE);
+                    else
+                        emitter.onSuccess(Boolean.FALSE);
+                    break;
+            }
+        });
+    }
+
     ////////////////////// UDP /////////////////////
 
     private Single<String> listenUDPResponse() {

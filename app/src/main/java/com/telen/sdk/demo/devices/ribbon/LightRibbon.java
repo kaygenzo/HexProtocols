@@ -153,6 +153,11 @@ public class LightRibbon implements GenericNetworkDevice {
         return dataLayer.disconnect(device);
     }
 
+    @Override
+    public Single<Boolean> isConnected(Device device) {
+        return dataLayer.isConnected(device);
+    }
+
     ////////////////////// UDP /////////////////////
 
     private Single<String> getRemoteAddress() {

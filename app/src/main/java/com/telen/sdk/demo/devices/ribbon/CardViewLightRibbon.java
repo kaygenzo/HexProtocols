@@ -17,8 +17,10 @@ import com.telen.sdk.demo.R;
 import com.telen.sdk.common.utils.ColorUtils;
 import com.telen.sdk.socket.devices.SocketDevice;
 
+import io.reactivex.Completable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class CardViewLightRibbon extends CardView {
@@ -39,6 +41,7 @@ public class CardViewLightRibbon extends CardView {
     private Button colorPicker;
     private Button scan;
     private Button disconnect;
+    private Button process;
 
 
     private CompositeDisposable slideDisposable = new CompositeDisposable();
@@ -76,6 +79,7 @@ public class CardViewLightRibbon extends CardView {
         colorPicker = findViewById(R.id.color_picker);
         scan = findViewById(R.id.scan);
         disconnect = findViewById(R.id.disconnect);
+        process = findViewById(R.id.process);
 
         lightRibbon = new LightRibbon(getContext());
 
@@ -150,6 +154,40 @@ public class CardViewLightRibbon extends CardView {
                     })
                     .build()
                     .show();
+        });
+
+        process.setOnClickListener(view -> {
+            mDevice.setType(RequestType.tcp);
+            Disposable disposable = lightRibbon.isConnected(mDevice)
+                    .flatMapCompletable(connected -> {
+                        if(connected) {
+                            Log.d(TAG, "already connected!");
+                            return Completable.complete();
+                        }
+                        else {
+                            return lightRibbon.connect(mDevice, RequestType.udp)
+                                    .flatMapCompletable(device -> {
+                                        Log.d(TAG,"process:step 1");
+                                        return Completable.complete();
+                                    })
+                                    .andThen(lightRibbon.scan())
+                                    .flatMap(device -> {
+                                        Log.d(TAG,"process:step 2");
+                                        SocketDevice updatedDevice = (SocketDevice)device;
+                                        mDevice.setAddress(updatedDevice.getAddress());
+                                        Log.d(TAG,mDevice.toString());
+                                        return lightRibbon.connect(mDevice, RequestType.tcp);
+                                    })
+                                    .flatMapCompletable(device -> Completable.complete())
+                                    ;
+                        }
+                    }).subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(() -> {
+                        Log.d(TAG,"Process finished!");
+                    }, throwable -> {
+                        Log.d(TAG,"", throwable);
+                    });
         });
 
         scan.setOnClickListener(view -> {

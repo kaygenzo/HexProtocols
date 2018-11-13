@@ -274,6 +274,24 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
         return Completable.complete();
     }
 
+    @Override
+    public Single<Boolean> isConnected(final Device device) {
+        return Single.create(emitter -> {
+            if(device!=null) {
+                RxBleDevice bleDevice = bleDevices.get(device);
+                if(bleDevice==null)
+                    bleDevice = rxBleClient.getBleDevice(device.getMacAddress());
+                if(bleDevice==null)
+                    emitter.onSuccess(Boolean.FALSE);
+                else {
+                    emitter.onSuccess(bleDevice.getConnectionState() == RxBleConnection.RxBleConnectionState.CONNECTED);
+                }
+            }
+            else
+                emitter.onSuccess(Boolean.FALSE);
+        });
+    }
+
     private void dispose(Disposable disposable) {
         if(disposable!=null && !disposable.isDisposed())
             disposable.dispose();

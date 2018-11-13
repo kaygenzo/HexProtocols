@@ -165,6 +165,11 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
         return sendCommand(device, command, null);
     }
 
+    @Override
+    public Single<Boolean> isConnected(Device device) {
+        return hardwareInteractionLayer.isConnected(device);
+    }
+
     private void startTimeout(final ObservableEmitter emitter, final CompositeDisposable disposable, final long timeout, final boolean isCompleteOnTimeout) {
         if(timeout>0) {
             disposable.add(

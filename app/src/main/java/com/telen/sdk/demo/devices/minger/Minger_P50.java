@@ -56,6 +56,11 @@ public class Minger_P50 implements GenericBleDevice {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
+    @Override
+    public Single<Boolean> isConnected(Device device) {
+        return dataLayer.isConnected(device);
+    }
+
     public Observable<String> apply(Device device, int red, int green, int blue, int value) {
         Map<String, Object> data = new HashMap<>();
         data.put("RED",red);

@@ -15,4 +15,5 @@ public interface DataLayerInterface<E> {
     Completable disconnect(Device device);
     Observable<String> sendCommand(Device device, Command command, Map<String, Object> data);
     Observable<String> sendCommand(Device device, Command command);
+    Single<Boolean> isConnected(Device device);
 }

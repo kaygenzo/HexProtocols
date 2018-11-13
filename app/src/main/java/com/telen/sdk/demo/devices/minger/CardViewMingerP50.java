@@ -21,6 +21,7 @@ import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class CardViewMingerP50 extends CardView {
 
@@ -78,6 +79,11 @@ public class CardViewMingerP50 extends CardView {
         connect.setEnabled(false);
         bond.setEnabled(false);
 
+        redSlide.setProgress(red);
+        greenSlide.setProgress(green);
+        blueSlide.setProgress(blue);
+        luminositySlide.setProgress(luminosity);
+
         minger_p50 = new Minger_P50(context);
 
         final SharedPreferences prefs = getContext().getSharedPreferences(Constants.PREFS_APPLICATION, 0);
@@ -87,6 +93,15 @@ public class CardViewMingerP50 extends CardView {
             mDevice = new Device(lastDeviceName, lastMacAddress);
             deviceReady(mDevice);
         }
+
+        Disposable disposable = minger_p50.isConnected(mDevice)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(isConnected -> {
+                    Toast.makeText(getContext(), "is connected ? "+isConnected, Toast.LENGTH_LONG).show();
+                }, throwable -> {
+                    Log.e(TAG,"", throwable);
+                });
 
         save.setOnClickListener(view -> {
             if(mDevice!=null) {
