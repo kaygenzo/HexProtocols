@@ -87,19 +87,12 @@ public class LightRibbon implements GenericNetworkDevice {
 
     @Override
     public Single<Device> scan() {
-        return Single.create(emitter -> getRemoteAddress()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(remoteAddress -> {
-                    Log.d(TAG, "complete!!");
-                    SocketDevice socketDevice = new SocketDevice(LightRibbon.class.getSimpleName());
-                    socketDevice.setAddress(remoteAddress);
-                    emitter.onSuccess(socketDevice);
-                }, throwable -> {
-                    Log.e(TAG, "", throwable);
-                    emitter.onError(throwable);
-                })
-        );
+        return getRemoteAddress().map(remoteAddress -> {
+            Log.d(TAG, "complete!!");
+            SocketDevice socketDevice = new SocketDevice(LightRibbon.class.getSimpleName());
+            socketDevice.setAddress(remoteAddress);
+            return socketDevice;
+        });
     }
 
     @Override

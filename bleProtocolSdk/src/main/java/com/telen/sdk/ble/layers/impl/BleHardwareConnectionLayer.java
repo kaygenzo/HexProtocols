@@ -74,6 +74,8 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                 Disposable observerConnectionDisposable = rxDeviceBle.observeConnectionStateChanges()
                         .subscribe(rxBleConnectionState -> {
                             Log.d(TAG, "state="+rxBleConnectionState.name());
+                        }, throwable -> {
+                            Log.e(TAG, "", throwable);
                         });
 
                 devicesDisposable.get(device).add(observerConnectionDisposable);
@@ -222,7 +224,11 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
                     })
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe();
+                    .subscribe(() -> {
+                        Log.d(TAG, "scan finished!");
+                    }, throwable -> {
+                        Log.e(TAG, "", throwable);
+                    });
 
 //            final ScanSettings settings = new ScanSettings.Builder()
 //                    .setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH)

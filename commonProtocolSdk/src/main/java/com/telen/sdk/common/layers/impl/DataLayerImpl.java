@@ -123,7 +123,8 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
                                         @Override
                                         public void onError(Throwable e) {
-                                            emitter.onError(e);
+                                            if(!emitter.isDisposed())
+                                                emitter.onError(e);
                                         }
 
                                         @Override

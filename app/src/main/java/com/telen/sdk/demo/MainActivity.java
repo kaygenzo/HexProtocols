@@ -12,6 +12,8 @@ import android.support.v7.widget.RecyclerView;
 
 import com.crashlytics.android.Crashlytics;
 
+import javax.inject.Inject;
+
 import io.fabric.sdk.android.Fabric;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,11 +24,17 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private DevicesBLEAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    @Inject FirestoreManager firestoreManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        DaggerApplicationWrapper.getComponent(this).inject(this);
+
+        if(firestoreManager!=null)
+            firestoreManager.init();
 
         Fabric.with(this, new Crashlytics());
 
@@ -52,11 +60,9 @@ public class MainActivity extends AppCompatActivity {
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        // specify an adapter (see also next example)
         mAdapter = new DevicesBLEAdapter(new DeviceInfo[] {
                 DeviceInfo.MINGER,
                 DeviceInfo.RIBBON
@@ -74,5 +80,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 permissionsGranted();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(firestoreManager!=null)
+            firestoreManager.destroy();
+        super.onDestroy();
     }
 }

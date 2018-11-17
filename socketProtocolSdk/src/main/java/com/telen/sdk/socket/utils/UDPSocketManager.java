@@ -3,6 +3,7 @@ package com.telen.sdk.socket.utils;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
@@ -24,8 +25,15 @@ public class UDPSocketManager {
             String currentAddress = networkUtils.getCurrentIPAddress();
             String message;
             do {
-                socket.receive(packet);
-                message = new String(packet.getData(), 0, packet.getLength());
+                try {
+                    socket.receive(packet);
+                    message = new String(packet.getData(), 0, packet.getLength());
+                }
+                catch (SocketException e) {
+                    if(!emitter.isDisposed())
+                        emitter.onError(e);
+                    return;
+                }
             } while (currentAddress!=null && packet.getAddress().getHostAddress().contains(currentAddress));
             emitter.onSuccess(message);
         });
@@ -34,10 +42,16 @@ public class UDPSocketManager {
     public Completable sendRequest(final DatagramSocket socket, final byte[] message, final String address, final int port, boolean isBroadcast) {
         return Completable.create(emitter -> {
 //            Log.d(TAG, "sendRequest");
-            socket.setBroadcast(isBroadcast);
-            DatagramPacket packet = new DatagramPacket(message, message.length, InetAddress.getByName(address), port);
-            socket.send(packet);
-            emitter.onComplete();
+            try {
+                socket.setBroadcast(isBroadcast);
+                DatagramPacket packet = new DatagramPacket(message, message.length, InetAddress.getByName(address), port);
+                socket.send(packet);
+                emitter.onComplete();
+            }
+            catch (SocketException e) {
+                if(!emitter.isDisposed())
+                    emitter.onError(e);
+            }
         });
     }
 }

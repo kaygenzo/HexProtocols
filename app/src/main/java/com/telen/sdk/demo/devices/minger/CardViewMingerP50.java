@@ -11,19 +11,28 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.telen.sdk.common.devices.GenericDevice;
+import com.telen.sdk.common.models.DeviceType;
+import com.telen.sdk.common.utils.ColorUtils;
 import com.telen.sdk.demo.Constants;
+import com.telen.sdk.demo.DaggerApplicationWrapper;
+import com.telen.sdk.demo.FirestoreManager;
+import com.telen.sdk.demo.ILightActions;
 import com.telen.sdk.demo.R;
 import com.telen.sdk.common.models.Device;
 
+import javax.inject.Inject;
+
 import io.reactivex.CompletableObserver;
 import io.reactivex.Observer;
+import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class CardViewMingerP50 extends CardView {
+public class CardViewMingerP50 extends CardView implements ILightActions {
 
     private static final String TAG = CardViewMingerP50.class.getSimpleName();
 
@@ -46,6 +55,7 @@ public class CardViewMingerP50 extends CardView {
     private int green;
     private int blue;
     private int luminosity;
+    @Inject FirestoreManager mFirestoreManager;
 
     public CardViewMingerP50(Context context) {
         super(context);
@@ -63,6 +73,10 @@ public class CardViewMingerP50 extends CardView {
     }
 
     private void initView(Context context) {
+
+        DaggerApplicationWrapper.getComponent(context).inject(this);
+        mFirestoreManager.registerLightCallback(DeviceType.LIGHTBULB,this);
+
         LayoutInflater.from(context).inflate(R.layout.cardview_minger_p50,this);
         connect = findViewById(R.id.connect);
         scan = findViewById(R.id.scan);
@@ -100,7 +114,7 @@ public class CardViewMingerP50 extends CardView {
                 .subscribe(isConnected -> {
                     Toast.makeText(getContext(), "is connected ? "+isConnected, Toast.LENGTH_LONG).show();
                 }, throwable -> {
-                    Log.e(TAG,"", throwable);
+                    Log.e(TAG,"Minger::isConnected", throwable);
                 });
 
         save.setOnClickListener(view -> {
@@ -130,7 +144,7 @@ public class CardViewMingerP50 extends CardView {
 
                         @Override
                         public void onError(Throwable e) {
-                            Log.e(TAG, "", e);
+                            Log.e(TAG, "Minger::scan", e);
                         }
                     });
         });
@@ -151,7 +165,7 @@ public class CardViewMingerP50 extends CardView {
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.e(TAG,"",e);
+                        Log.e(TAG,"Minger::connect",e);
                     }
                 }));
 
@@ -171,7 +185,7 @@ public class CardViewMingerP50 extends CardView {
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.e(TAG,"",e);
+                        Log.e(TAG,"Minger::connect",e);
                     }
                 }));
 
@@ -190,7 +204,7 @@ public class CardViewMingerP50 extends CardView {
 
                     @Override
                     public void onError(Throwable e) {
-                        Log.e(TAG,"",e);
+                        Log.e(TAG,"Minger::disconnect",e);
                     }
                 })
         );
@@ -210,12 +224,12 @@ public class CardViewMingerP50 extends CardView {
 
                             @Override
                             public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
+                                Log.d(TAG,"responseFrame="+s);
                             }
 
                             @Override
                             public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
+                                Log.e(TAG,"Minger::apply",e);
                             }
 
                             @Override
@@ -251,12 +265,12 @@ public class CardViewMingerP50 extends CardView {
 
                             @Override
                             public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
+                                Log.d(TAG,"responseFrame="+s);
                             }
 
                             @Override
                             public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
+                                Log.e(TAG,"Minger::apply",e);
                             }
 
                             @Override
@@ -292,12 +306,12 @@ public class CardViewMingerP50 extends CardView {
 
                             @Override
                             public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
+                                Log.d(TAG,"responseFrame="+s);
                             }
 
                             @Override
                             public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
+                                Log.e(TAG,"Minger::apply",e);
                             }
 
                             @Override
@@ -333,12 +347,12 @@ public class CardViewMingerP50 extends CardView {
 
                             @Override
                             public void onNext(String s) {
-                                Log.e(TAG,"responseFrame="+s);
+                                Log.d(TAG,"responseFrame="+s);
                             }
 
                             @Override
                             public void onError(Throwable e) {
-                                Log.e(TAG,"",e);
+                                Log.e(TAG,"Minger::apply",e);
                             }
 
                             @Override
@@ -365,5 +379,60 @@ public class CardViewMingerP50 extends CardView {
         disconnect.setEnabled(true);
         connect.setEnabled(true);
         bond.setEnabled(true);
+    }
+
+    @Override
+    public void lightOn() {
+        scanIfNeeded(minger_p50)
+                .flatMap(device-> minger_p50.connect(device, false))
+                .flatMapObservable(minger_p50::lighOn)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s -> {
+                }, throwable -> {
+                    Log.e(TAG,"Minger::lightOn", throwable);
+                });
+    }
+
+    @Override
+    public void lightOff() {
+        scanIfNeeded(minger_p50)
+                .flatMap(device-> minger_p50.connect(device, false))
+                .flatMapObservable(minger_p50::lighOff)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s -> {
+                }, throwable -> {
+                    Log.e(TAG,"Minger::lightOff", throwable);
+                });
+    }
+
+    @Override
+    public void setColor(int color) {
+        int[] rgbArray = ColorUtils.getRGB(color);
+        int luminosity = color!=0 ? 0 : 255;
+        scanIfNeeded(minger_p50)
+                .flatMap(device-> minger_p50.connect(device, false))
+                .flatMapObservable(device -> minger_p50.apply(device, rgbArray[0], rgbArray[1], rgbArray[2], luminosity))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s -> {
+                }, throwable -> {
+                    Log.e(TAG,"Minger::setColor", throwable);
+                });
+    }
+
+    private Single<Device> scanIfNeeded(GenericDevice genericDevice) {
+        return  Single.create(emitter -> {
+            if(mDevice!=null)
+                emitter.onSuccess(mDevice);
+            else
+                genericDevice.scan()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(device -> {
+                            mDevice = device;
+                            emitter.onSuccess(device);
+                        }, throwable -> {
+                            emitter.onError(throwable);
+                            Log.e(TAG,"Minger::scanIfNeeded",throwable);
+                        });
+        });
     }
 }

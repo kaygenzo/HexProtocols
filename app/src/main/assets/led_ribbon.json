@@ -6,7 +6,6 @@
       "request": {
         "type": "tcp",
         "port": 5577,
-        "address": "192.168.1.93",
         "length": 4,
         "payloads": [
           {
@@ -49,7 +48,6 @@
       "request": {
         "type": "tcp",
         "port": 5577,
-        "address": "192.168.1.93",
         "length": 4,
         "payloads": [
           {
@@ -92,7 +90,6 @@
       "request": {
         "type": "tcp",
         "port": 5577,
-        "address": "192.168.1.93",
         "length": 8,
         "payloads": [
           {
@@ -163,7 +160,6 @@
       "request": {
         "type": "udp",
         "port": 48899,
-        "address": "10.10.123.255",
         "isBroadcast": true,
         "payloads": [
           {

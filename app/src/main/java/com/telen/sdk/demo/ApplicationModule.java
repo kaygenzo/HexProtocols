@@ -44,4 +44,10 @@ public class ApplicationModule {
     public NetworkUtils provideNetworkUtils() {
         return SocketDaggerWrapper.getComponent(context).provideNetworkUtils();
     }
+
+    @Provides
+    @ApplicationScope
+    public FirestoreManager provideFirestoreManager() {
+        return new FirestoreManager();
+    }
 }

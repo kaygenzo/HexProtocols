@@ -206,7 +206,6 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
                             }
                         }, throwable -> {
                             if(!emitter.isDisposed()) {
-                                Log.e(TAG, "", throwable);
                                 emitter.onError(throwable);
                             }
                         });
@@ -232,7 +231,6 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
                             }
                         }, throwable -> {
                             if(!emitter.isDisposed()) {
-                                Log.e(TAG, "", throwable);
                                 emitter.onError(throwable);
                             }
                         });
