@@ -22,6 +22,17 @@ allprojects {
     }
 }
 
+ext {
+    retrofitVersion = '2.2.0'
+    firebaseVersion = '16.0.0'
+    daggerVersion = '2.16'
+    okhttp3Version = '3.11.0'
+    rxjava2Version = '2.0.2'
+    gsonVersion = '2.7'
+    supportVersion = "27.1.1"
+    rxandroidbleVersion = "1.7.1"
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
