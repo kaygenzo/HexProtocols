@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.polidea.rxandroidble2.RxBleClient;
@@ -40,7 +41,7 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
 
     private Context mContext;
     private RxBleClient rxBleClient;
-    private BluetoothAdapter mBluetoothAdapter;
+    @Nullable private BluetoothAdapter mBluetoothAdapter;
 
     private Map<Device, RxBleDevice> bleDevices = new HashMap<>();
     private Map<Device, CompositeDisposable> devicesDisposable = new HashMap<>();

@@ -3,6 +3,7 @@ package com.telen.sdk.ble.di;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import com.polidea.rxandroidble2.RxBleClient;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
@@ -25,7 +26,7 @@ public class BleLibraryModule {
 
     @Provides
     @BleScope
-    public BleHardwareConnectionLayer provideHardwareLayer(RxBleClient client, BluetoothAdapter bluetoothAdapter, Context context) {
+    public BleHardwareConnectionLayer provideHardwareLayer(RxBleClient client, @Nullable BluetoothAdapter bluetoothAdapter, Context context) {
         return new BleHardwareConnectionLayer(client, bluetoothAdapter, context);
     }
 
@@ -36,6 +37,7 @@ public class BleLibraryModule {
     }
 
     @Provides
+    @Nullable
     @BleScope
     public BluetoothAdapter provideBluetoothAdapter(Context context) {
         BluetoothManager manager = (BluetoothManager)context.getSystemService(Context.BLUETOOTH_SERVICE);
