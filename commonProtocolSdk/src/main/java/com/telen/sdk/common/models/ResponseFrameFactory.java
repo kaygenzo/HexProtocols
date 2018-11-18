@@ -5,6 +5,7 @@ import android.util.Log;
 import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.List;
+import java.util.Locale;
 
 import io.reactivex.Single;
 
@@ -38,7 +39,7 @@ public class ResponseFrameFactory {
                 Directions direction = Directions.LTR;
                 try {
                     if(payload.getDirection()!=null)
-                        direction = Directions.valueOf(payload.getDirection().toUpperCase());
+                        direction = Directions.valueOf(payload.getDirection().toUpperCase(Locale.US));
                 }
                 catch (IllegalArgumentException e) {
                     Log.e(TAG,"",e);

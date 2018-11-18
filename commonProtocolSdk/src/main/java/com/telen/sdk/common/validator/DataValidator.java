@@ -11,6 +11,7 @@ import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import io.reactivex.Completable;
@@ -105,7 +106,7 @@ public class DataValidator {
                 Directions direction = Directions.LTR;
                 try {
                     if(payload.getDirection()!=null)
-                        direction = Directions.valueOf(payload.getDirection().toUpperCase());
+                        direction = Directions.valueOf(payload.getDirection().toUpperCase(Locale.US));
                 }
                 catch (IllegalArgumentException e) {
                     Log.e(TAG,"",e);
