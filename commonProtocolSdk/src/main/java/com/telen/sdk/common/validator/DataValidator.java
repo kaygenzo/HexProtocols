@@ -5,6 +5,7 @@ import android.util.Log;
 import com.telen.sdk.common.exceptions.InvalidPayloadLengthException;
 import com.telen.sdk.common.exceptions.InvalidPayloadValueException;
 import com.telen.sdk.common.models.Directions;
+import com.telen.sdk.common.models.Frame;
 import com.telen.sdk.common.models.Payload;
 import com.telen.sdk.common.models.PayloadType;
 import com.telen.sdk.common.utils.BytesUtils;
@@ -44,8 +45,13 @@ public class DataValidator {
                     PayloadType type = PayloadType.valueOf(payloadTypeString);
 
                     switch (type) {
-                        case HEX_STRING:
+                        case STRING:
                             String obj = (String) value;
+                            if(obj.length() != bytesLength)
+                                emitter.onError(new InvalidPayloadLengthException("Invalid payload size for "+payload.getName()+" : expect " + bytesLength + " bytes but string is length " + obj.length()));
+                            break;
+                        case HEX_STRING:
+                            obj = (String) value;
                             if (obj.length() > bytesLength * 2)
                                 emitter.onError(new InvalidPayloadLengthException("Invalid payload size for "+payload.getName()+" : expect " + bytesLength + " bytes but string is length " + obj.length()));
                             break;
@@ -59,11 +65,15 @@ public class DataValidator {
                             break;
                         case LONG:
                             Long longValue = Long.parseLong(value.toString());
-                            if (longValue > Long.parseLong(payload.getMax()) || longValue < Long.parseLong(payload.getMin())) {
-                                emitter.onError(new InvalidPayloadValueException("Invalid payload value for "+payload.getName()+" : expect long between " + payload.getMin() + " and " + payload.getMax()
-                                        + " but value is " + longValue));
-                                return;
+                            if(payload.getMax()!=null && payload.getMin()!=null) {
+                                if (longValue > Long.parseLong(payload.getMax()) || longValue < Long.parseLong(payload.getMin())) {
+                                    emitter.onError(new InvalidPayloadValueException("Invalid payload value for " + payload.getName() + " : expect long between " + payload.getMin() + " and " + payload.getMax()
+                                            + " but value is " + longValue));
+                                    return;
+                                }
                             }
+                            else
+                                Log.w(TAG,"No min value or max value found, payload validated without check");
                             break;
                         case HEX:
                             longValue = Long.parseLong(value.toString());
@@ -87,8 +97,50 @@ public class DataValidator {
         });
     }
 
-    public Completable validateData(List<Payload> payloads, String hexString) {
+    public Completable validateData(List<Frame> frames, String hexString) {
         return Completable.create(emitter -> {
+
+            if(frames==null || frames.isEmpty()) {
+                emitter.onComplete();
+                return;
+            }
+
+            List<Payload> payloads = null;
+
+//            for (Frame frame: frames) {
+//                List<Payload> localPayloads = frame.getPayloads();
+//                if(localPayloads!=null && !localPayloads.isEmpty() && frame.getCommandIndex() < localPayloads.size()) {
+//                    //search for corresponding frame
+//                    Payload payload = localPayloads.get(frame.getCommandIndex());
+//
+//                    if(payload.getValue()!=null && PayloadType.INTEGER.name().equals(payload.getType())) {
+//                        int start = payload.getStart();
+//                        int end = payload.getEnd();
+//
+//                        StringBuilder payloadExtract = new StringBuilder();
+//                        payloadExtract.append(hexString, start * 2, 2 * (end + 1));
+//                        int command = Integer.parseInt(payloadExtract.toString(), 16);
+//                        if (command == Integer.parseInt(payload.getValue())) {
+//                            payloads = localPayloads;
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
+
+            for (Frame frame: frames) {
+                if (frame.getCommandIndex() >= 0 && frame.getCommandId() >= 0) {
+                    StringBuilder payloadExtract = new StringBuilder();
+                    payloadExtract.append(hexString, frame.getCommandIndex() * 2, 2 * (frame.getCommandIndex() + 1));
+                    int command = Integer.parseInt(payloadExtract.toString(), 16);
+                    if (command == frame.getCommandId()) {
+                        payloads = frame.getPayloads();
+                        break;
+                    }
+                }
+                else
+                    Log.i(TAG,"commandIndex or commandId not configured in the protocol file.");
+            }
 
             if(payloads==null || payloads.isEmpty()) {
                 emitter.onComplete();
@@ -123,6 +175,12 @@ public class DataValidator {
                 try {
                     PayloadType payloadType = PayloadType.valueOf(payloadTypeString);
                     switch (payloadType) {
+                        case STRING:
+                            String stringValue = BytesUtils.hexStringToAscii(extractHex);
+                            if (stringValue.length() != bytesLength)
+                                emitter.onError(new InvalidPayloadLengthException("Invalid payload size: expect " + bytesLength + " characters but string is length " + stringValue.length()));
+
+                            break;
                         case HEX_STRING:
                             String obj = extractHex;
                             if (obj.length() > bytesLength * 2)
@@ -146,12 +204,24 @@ public class DataValidator {
                             break;
                         case HEX:
                             longValue = Long.parseLong(extractHex, 16);
-                            Long hexMin = Long.decode(payload.getMin());
-                            Long hexMax = Long.decode(payload.getMax());
-                            if (longValue > hexMax || longValue < hexMin) {
-                                emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect hex between " + payload.getMin() + " and " + payload.getMax()
-                                        + " but value is " + longValue));
-                                return;
+                            if(payload.getMin()!=null && payload.getMax()!=null) {
+                                Long hexMin = Long.decode(payload.getMin());
+                                Long hexMax = Long.decode(payload.getMax());
+                                if (longValue > hexMax || longValue < hexMin) {
+                                    emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect hex between " + payload.getMin() + " and " + payload.getMax()
+                                            + " but value is " + longValue));
+                                    return;
+                                }
+                            }
+                            else
+                                Log.w(TAG,"No min value or max value found");
+                            if(payload.getValue()!=null) {
+                                long hexValue = Long.decode(payload.getValue());
+                                if(hexValue!=longValue) {
+                                    emitter.onError(new InvalidPayloadValueException("Invalid payload value: expect hex value equals to " + payload.getValue()
+                                            + " but value is " + longValue));
+                                    return;
+                                }
                             }
                             break;
                         default:

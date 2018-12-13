@@ -13,10 +13,9 @@ public class ResponseFrameFactory {
 
     private static final String TAG = ResponseFrameFactory.class.getSimpleName();
 
-    public <T extends ResponseFrame> Single<ResponseFrame> parse(Response response, String responseFrameString, Class<T> type) {
+    public <T extends ResponseFrame> Single<ResponseFrame> parse(List<Payload> payloads, String responseFrameString, Class<T> type) {
         return Single.create(emitter -> {
             Log.d(TAG,"Parse "+responseFrameString);
-            List<Payload> responsePayloads = response.getPayloads();
 
             T returnResponseFrame;
             try {
@@ -27,7 +26,7 @@ public class ResponseFrameFactory {
                 return;
             }
 
-            for (Payload payload: responsePayloads) {
+            for (Payload payload: payloads) {
                 String identifier = payload.getName();
                 int start = payload.getStart();
                 int end = payload.getEnd();
@@ -62,6 +61,9 @@ public class ResponseFrameFactory {
                             returnResponseFrame.setValue(payload, Long.parseLong(extractHex, 16));
                             break;
                         case STRING:
+                            returnResponseFrame.setValue(payload, BytesUtils.hexStringToAscii(extractHex));
+                            break;
+                        case HEX_STRING:
                             returnResponseFrame.setValue(payload, extractHex);
                             break;
                     }

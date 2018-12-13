@@ -11,6 +11,7 @@ import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.Response;
 import com.telen.sdk.common.validator.DataValidator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +36,8 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
     private CompositeDisposable mRequestTimeoutDisposable = new CompositeDisposable();
     private CompositeDisposable mResponseTimeoutDisposable = new CompositeDisposable();
-    private CompositeDisposable dataListenerDisposable = new CompositeDisposable();
+
+    private Map<String, CompositeDisposable> dataListenerDisposableMap = new HashMap<>();
 
     private T hardwareInteractionLayer;
     private DataValidator dataValidator;
@@ -77,7 +79,14 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
     @Override
     public Observable<String> sendCommand(Device device, Command command, Map<String, Object> data) {
         return Observable.create(emitter -> {
+
+            if(!dataListenerDisposableMap.containsKey(command.getIdentifier())) {
+                dataListenerDisposableMap.put(command.getIdentifier(), new CompositeDisposable());
+            }
+
+            final CompositeDisposable dataListenerDisposable = dataListenerDisposableMap.get(command.getIdentifier());
             dataListenerDisposable.clear();
+
             //let's validate payloads and build the hexa string command
             dataValidator.validateData(command.getRequest().getPayloads(), data)
                     .andThen(hardwareInteractionLayer.prepareBeforeSendingCommand(command.getRequest()))
@@ -96,43 +105,29 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
                             startResponseTimeout(emitter, command.getResponse());
 
-                            hardwareInteractionLayer
+                            Disposable listenerDisposable = hardwareInteractionLayer
                                     .listenResponses(device, command.getResponse())
-                                    .flatMap(response -> dataValidator.validateData(command.getResponse().getPayloads(), response)
+                                    .flatMap(response -> dataValidator.validateData(command.getResponse().getFrames(), response)
                                             .andThen(Observable.just(response))
                                     )
-                                    .subscribe(new Observer<String>() {
-                                        @Override
-                                        public void onSubscribe(Disposable d) {
-                                            dataListenerDisposable.add(d);
-                                        }
+                                    .subscribe(s -> {
+                                        emitter.onNext(s);
 
-                                        @Override
-                                        public void onNext(String s) {
-                                            emitter.onNext(s);
-
-                                            String endFrame = command.getResponse().getEndFrame();
-                                            if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
-                                                stopResponseTimeout();
-                                                dataListenerDisposable.clear();
-                                                emitter.onComplete();
-                                            }
-                                            else
-                                                resetResponseTimeout(emitter, command.getResponse());
-                                        }
-
-                                        @Override
-                                        public void onError(Throwable e) {
-                                            if(!emitter.isDisposed())
-                                                emitter.onError(e);
-                                        }
-
-                                        @Override
-                                        public void onComplete() {
+                                        String endFrame = command.getResponse().getEndFrame();
+                                        if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
+                                            stopResponseTimeout();
+                                            dataListenerDisposable.clear();
                                             emitter.onComplete();
                                         }
+                                        else
+                                            resetResponseTimeout(emitter, command.getResponse());
+                                    }, throwable -> {
+                                        if(!emitter.isDisposed())
+                                            emitter.onError(throwable);
+                                    }, () -> {
+                                        emitter.onComplete();
                                     });
-
+                            dataListenerDisposable.add(listenerDisposable);
                         }
                         return hardwareInteractionLayer.sendCommand(device, command.getRequest(), hexaCommand);
                     })
@@ -169,6 +164,15 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
     @Override
     public Single<Boolean> isConnected(Device device) {
         return hardwareInteractionLayer.isConnected(device);
+    }
+
+    @Override
+    public Observable<String> observe(Device device, Response response) {
+        return hardwareInteractionLayer.listenResponses(device, response)
+                .flatMap(responseFrame ->
+                        dataValidator.validateData(response.getFrames(), responseFrame)
+                                .andThen(Observable.just(responseFrame))
+                );
     }
 
     private void startTimeout(final ObservableEmitter emitter, final CompositeDisposable disposable, final long timeout, final boolean isCompleteOnTimeout) {

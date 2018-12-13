@@ -2,6 +2,7 @@ package com.telen.sdk.common.layers;
 
 import com.telen.sdk.common.models.Command;
 import com.telen.sdk.common.models.Device;
+import com.telen.sdk.common.models.Response;
 
 import java.util.Map;
 
@@ -16,4 +17,5 @@ public interface DataLayerInterface<E> {
     Observable<String> sendCommand(Device device, Command command, Map<String, Object> data);
     Observable<String> sendCommand(Device device, Command command);
     Single<Boolean> isConnected(Device device);
+    Observable<String> observe(Device device, Response response);
 }

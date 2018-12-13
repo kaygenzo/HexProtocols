@@ -8,7 +8,7 @@ import com.telen.sdk.common.models.Command;
 import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.DeviceConfiguration;
 import com.telen.sdk.common.models.ProtocolConfiguration;
-import com.telen.sdk.common.models.RequestType;
+import com.telen.sdk.socket.models.RequestType;
 import com.telen.sdk.demo.DaggerApplicationWrapper;
 import com.telen.sdk.demo.DeviceInfo;
 import com.telen.sdk.socket.devices.GenericNetworkDevice;

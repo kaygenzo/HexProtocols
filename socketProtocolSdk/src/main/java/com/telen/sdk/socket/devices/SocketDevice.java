@@ -1,7 +1,7 @@
 package com.telen.sdk.socket.devices;
 
 import com.telen.sdk.common.models.Device;
-import com.telen.sdk.common.models.RequestType;
+import com.telen.sdk.socket.models.RequestType;
 
 public class SocketDevice extends Device {
     private String address;

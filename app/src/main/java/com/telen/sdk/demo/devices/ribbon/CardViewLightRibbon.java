@@ -13,7 +13,7 @@ import android.widget.TextView;
 import com.flask.colorpicker.ColorPickerView;
 import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 import com.telen.sdk.common.models.DeviceType;
-import com.telen.sdk.common.models.RequestType;
+import com.telen.sdk.socket.models.RequestType;
 import com.telen.sdk.demo.DaggerApplicationWrapper;
 import com.telen.sdk.demo.FirestoreManager;
 import com.telen.sdk.demo.ILightActions;

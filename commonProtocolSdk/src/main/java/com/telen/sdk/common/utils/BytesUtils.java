@@ -74,4 +74,24 @@ public class BytesUtils {
         }
         return (byte)j;
     }
+
+    public static String hexStringToAscii(String hexString) {
+        StringBuilder output = new StringBuilder();
+        String hex = hexString;
+        if(hex.length() % 2 != 0)
+            hex = '0' + hex;
+        for (int i = 0; i < hex.length(); i+=2) {
+            String str = hex.substring(i, i+2);
+            output.append((char)Integer.parseInt(str, 16));
+        }
+        return output.toString();
+    }
+
+    public static byte[] xor(byte[] a, byte[] key) {
+        byte[] out = new byte[a.length];
+        for (int i = 0; i < a.length; i++) {
+            out[i] = (byte) (a[i] ^ key[i%key.length]);
+        }
+        return out;
+    }
 }

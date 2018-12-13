@@ -4,7 +4,9 @@ import android.content.Context;
 
 import com.telen.sdk.ble.di.BleDaggerWrapper;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
+import com.telen.sdk.common.di.CommonDaggerWrapper;
 import com.telen.sdk.common.layers.DataLayerInterface;
+import com.telen.sdk.common.models.ResponseFrameFactory;
 import com.telen.sdk.socket.di.SocketDaggerWrapper;
 import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
 import com.telen.sdk.socket.utils.NetworkUtils;
@@ -49,5 +51,11 @@ public class ApplicationModule {
     @ApplicationScope
     public FirestoreManager provideFirestoreManager() {
         return new FirestoreManager();
+    }
+
+    @Provides
+    @ApplicationScope
+    public ResponseFrameFactory provideResponseFrameFactory() {
+        return CommonDaggerWrapper.getComponent(context).provideResponseFrameFactory();
     }
 }

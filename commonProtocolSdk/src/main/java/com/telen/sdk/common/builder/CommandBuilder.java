@@ -73,6 +73,11 @@ public class CommandBuilder {
                         case ASCII:
                             commandArray[index] = (String)obj;
                             continue;
+                        case STRING:
+                            String value = (String)obj;
+                            value = BytesUtils.byteArrayToHex(value.getBytes());
+                            commandBuilder.append(value);
+                            break;
                         default:
                             Log.d(TAG, "Not managed type "+type+" yet");
                     }

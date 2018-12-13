@@ -2,7 +2,7 @@ package com.telen.sdk.socket.devices;
 
 import com.telen.sdk.common.devices.GenericDevice;
 import com.telen.sdk.common.models.Device;
-import com.telen.sdk.common.models.RequestType;
+import com.telen.sdk.socket.models.RequestType;
 
 import io.reactivex.Single;
 

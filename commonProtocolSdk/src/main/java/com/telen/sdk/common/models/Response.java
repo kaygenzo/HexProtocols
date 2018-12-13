@@ -18,9 +18,9 @@ public class Response {
     @Expose
     private String endFrame;
 
-    @SerializedName("payloads")
+    @SerializedName("frames")
     @Expose
-    private List<Payload> payloads;
+    private List<Frame> frames;
 
     @SerializedName("complete_on_timeout")
     @Expose
@@ -50,14 +50,6 @@ public class Response {
         this.characteristic = characteristic;
     }
 
-    public List<Payload> getPayloads() {
-        return payloads;
-    }
-
-    public void setPayloads(List<Payload> payloads) {
-        this.payloads = payloads;
-    }
-
     public String getEndFrame() {
         return endFrame;
     }
@@ -84,5 +76,27 @@ public class Response {
 
     public String getType() {
         return type;
+    }
+
+    public List<Frame> getFrames() {
+        return frames;
+    }
+
+    public void setFrames(List<Frame> frames) {
+        this.frames = frames;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Frame getFrameByCommandId(int commandId) {
+        if(frames!=null) {
+            for (Frame frame: frames) {
+                if(frame.getCommandId() == commandId)
+                    return frame;
+            }
+        }
+        return null;
     }
 }

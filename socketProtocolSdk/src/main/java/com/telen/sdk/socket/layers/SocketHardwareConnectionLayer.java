@@ -6,7 +6,7 @@ import android.util.Log;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
 import com.telen.sdk.common.models.Device;
 import com.telen.sdk.common.models.Request;
-import com.telen.sdk.common.models.RequestType;
+import com.telen.sdk.socket.models.RequestType;
 import com.telen.sdk.common.models.Response;
 import com.telen.sdk.common.utils.BytesUtils;
 import com.telen.sdk.socket.devices.SocketDevice;
