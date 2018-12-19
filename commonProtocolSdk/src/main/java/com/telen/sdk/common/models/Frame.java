@@ -1,5 +1,7 @@
 package com.telen.sdk.common.models;
 
+import android.support.annotation.RestrictTo;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -33,5 +35,15 @@ public class Frame {
 
     public int getCommandId() {
         return commandId;
+    }
+
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    public void setCommandId(int commandId) {
+        this.commandId = commandId;
+    }
+
+    @RestrictTo(RestrictTo.Scope.TESTS)
+    public void setCommandIndex(int commandIndex) {
+        this.commandIndex = commandIndex;
     }
 }

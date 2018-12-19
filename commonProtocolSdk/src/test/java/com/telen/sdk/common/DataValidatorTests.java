@@ -1,7 +1,10 @@
 package com.telen.sdk.common;
 
+import android.util.Log;
+
 import com.telen.sdk.common.exceptions.InvalidPayloadLengthException;
 import com.telen.sdk.common.exceptions.InvalidPayloadValueException;
+import com.telen.sdk.common.models.Frame;
 import com.telen.sdk.common.models.Payload;
 import com.telen.sdk.common.models.PayloadType;
 import com.telen.sdk.common.validator.DataValidator;
@@ -10,6 +13,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,9 +28,12 @@ import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Log.class)
 public class DataValidatorTests {
 
     private DataValidator dataValidator;
+    private List<Frame> frames;
 
     @BeforeClass
     public static void setupClass() {
@@ -41,6 +51,8 @@ public class DataValidatorTests {
     @Before
     public void setup() {
         dataValidator = new DataValidator();
+        frames = new ArrayList<>();
+        PowerMockito.mockStatic(Log.class);
     }
 
     @Test
@@ -208,6 +220,14 @@ public class DataValidatorTests {
     @Test
     public void shouldValidateResponseFrame() {
         List<Payload> payloads = new ArrayList<>();
+
+        Frame frame = new Frame();
+        frame.setPayloads(payloads);
+        frame.setCommandId(3);
+        frame.setCommandIndex(0);
+
+        frames.add(frame);
+
         Payload payload = new Payload();
         payload.setName("PAYLOAD_1");
         payload.setType(PayloadType.HEX_STRING.name());
@@ -267,7 +287,7 @@ public class DataValidatorTests {
         String responseFrame = "3F3E030000030300FFFF00000000000000000603";
 
         TestObserver<String> observer = new TestObserver<>();
-        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        dataValidator.validateData(frames, responseFrame).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertComplete();
     }
@@ -295,6 +315,14 @@ public class DataValidatorTests {
     @Test
     public void shouldTriggerExceptionIfIntegerPayloadOutOfBounds() {
         List<Payload> payloads = new ArrayList<>();
+
+        Frame frame = new Frame();
+        frame.setPayloads(payloads);
+        frame.setCommandId(3);
+        frame.setCommandIndex(0);
+
+        frames.add(frame);
+
         Payload payload = new Payload();
         payload.setName("PAYLOAD_1");
         payload.setDirection("rtl");
@@ -308,7 +336,7 @@ public class DataValidatorTests {
         String responseFrame = "0300030000030300FFFF00000000000000000603";
 
         TestObserver<String> observer = new TestObserver<>();
-        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        dataValidator.validateData(frames, responseFrame).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(InvalidPayloadValueException.class);
     }
@@ -316,6 +344,14 @@ public class DataValidatorTests {
     @Test
     public void shouldTriggerExceptionIfLongPayloadOutOfBounds() {
         List<Payload> payloads = new ArrayList<>();
+
+        Frame frame = new Frame();
+        frame.setPayloads(payloads);
+        frame.setCommandId(3);
+        frame.setCommandIndex(0);
+
+        frames.add(frame);
+
         Payload payload = new Payload();
         payload.setName("PAYLOAD_1");
         payload.setDirection("rtl");
@@ -329,7 +365,7 @@ public class DataValidatorTests {
         String responseFrame = "0300030000030300FFFF00000000000000000603";
 
         TestObserver<String> observer = new TestObserver<>();
-        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        dataValidator.validateData(frames, responseFrame).subscribe(observer);
         observer.awaitTerminalEvent();
         observer.assertError(InvalidPayloadValueException.class);
     }
@@ -337,6 +373,14 @@ public class DataValidatorTests {
     @Test
     public void shouldTriggerExceptionIfHexPayloadOutOfBounds() {
         List<Payload> payloads = new ArrayList<>();
+
+        Frame frame = new Frame();
+        frame.setPayloads(payloads);
+        frame.setCommandId(3);
+        frame.setCommandIndex(0);
+
+        frames.add(frame);
+
         Payload payload = new Payload();
         payload.setName("PAYLOAD_1");
         payload.setDirection("rtl");
@@ -350,8 +394,229 @@ public class DataValidatorTests {
         String responseFrame = "0300030000030300FFFF00000000000000000603";
 
         TestObserver<String> observer = new TestObserver<>();
-        dataValidator.validateData(payloads, responseFrame).subscribe(observer);
+        dataValidator.validateData(frames, responseFrame).subscribe(observer);
         observer.awaitTerminalEvent();
+        observer.assertError(InvalidPayloadValueException.class);
+    }
+
+    @Test
+    public void shouldValidateDataToSendIfDataIsNull() {
+        List<Payload> payloads = new ArrayList<>();
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(payloads, null)
+                .subscribe(observer);
+        observer.awaitTerminalEvent();
+        observer.assertComplete();
+    }
+
+//    @Test
+//    public void shouldNotValidatePayloadIfStringWithInvalidSize() {
+//        List<Payload> payloads = new ArrayList<>();
+//        Payload payload = new Payload();
+//        payload.setStart(0);
+//        payload.setEnd(10);
+//        payload.setType(PayloadType.STRING.name());
+//        payload.setName("TEST");
+//
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("TEST", "Hello");
+//    }
+
+    @Test
+    public void shouldValidatePayloadIfLongWithoutMax() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.LONG.name());
+        payload.setName("TEST");
+        payload.setMin(0);
+        payloads.add(payload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("TEST", 123L);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(payloads, data)
+        .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidatePayloadIfLongWithoutMin() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.LONG.name());
+        payload.setName("TEST");
+        payload.setMax(20);
+        payloads.add(payload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("TEST", 123L);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(payloads, data)
+                .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldEmmitAnErrorIfPayloadTypeUnknown() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType("TYPE");
+        payload.setName("TEST");
+        payload.setMax(20);
+        payloads.add(payload);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("TEST", 123L);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(payloads, data)
+                .subscribe(observer);
+        observer.assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void shouldEmmitAnErrorIfPayloadTypeUnknownWhenResponseFrame() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType("TYPE");
+        payload.setName("TEST");
+        payload.setValue("0xFF");
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+        frame.setCommandId(255);
+        frame.setCommandIndex(0);
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "ffff")
+                .subscribe(observer);
+        observer.assertError(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void shouldBeValidatedByDefaultIfNoCommandIdAndCommandIndexFilled() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.LONG.name());
+        payload.setName("TEST");
+        payload.setMin(0);
+        payload.setMax(20);
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "ffff")
+                .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidateResponseFrameIfHexWithoutMax() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.HEX.name());
+        payload.setName("TEST");
+        payload.setMin("0x01");
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+        frame.setCommandId(0);
+        frame.setCommandIndex(0);
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "00ff")
+                .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidateResponseFrameIfHexWithoutMin() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.HEX.name());
+        payload.setName("TEST");
+        payload.setMax("0x01");
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+        frame.setCommandId(255);
+        frame.setCommandIndex(0);
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "ffff")
+                .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldValidateResponseFrameIfHexWithGoodExpectedValue() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.HEX.name());
+        payload.setName("TEST");
+        payload.setValue("0xFF");
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+        frame.setCommandId(255);
+        frame.setCommandIndex(0);
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "ffff")
+                .subscribe(observer);
+        observer.assertComplete();
+    }
+
+    @Test
+    public void shouldNotValidateResponseFrameIfHexWithNotGoodExpectedValue() {
+        List<Payload> payloads = new ArrayList<>();
+        Payload payload = new Payload();
+        payload.setStart(0);
+        payload.setEnd(0);
+        payload.setType(PayloadType.HEX.name());
+        payload.setName("TEST");
+        payload.setValue("0x01");
+        payloads.add(payload);
+
+        Frame frame = new Frame();
+        frame.setCommandId(255);
+        frame.setCommandIndex(0);
+        frame.setPayloads(payloads);
+        frames.add(frame);
+
+        TestObserver observer = new TestObserver();
+        dataValidator.validateData(frames, "ffff")
+                .subscribe(observer);
         observer.assertError(InvalidPayloadValueException.class);
     }
 }

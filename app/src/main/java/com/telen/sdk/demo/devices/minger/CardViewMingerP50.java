@@ -101,8 +101,8 @@ public class CardViewMingerP50 extends CardView implements ILightActions {
         minger_p50 = new Minger_P50(context);
 
         final SharedPreferences prefs = getContext().getSharedPreferences(Constants.PREFS_APPLICATION, 0);
-        String lastDeviceName = prefs.getString(Constants.PREF_NAME, null);
-        String lastMacAddress = prefs.getString(Constants.PREF_MAC, null);
+        String lastDeviceName = prefs.getString(Constants.PREF_MINGER_NAME, null);
+        String lastMacAddress = prefs.getString(Constants.PREF_MINGER_MAC, null);
         if(lastDeviceName != null && lastMacAddress != null) {
             mDevice = new Device(lastDeviceName, lastMacAddress);
             deviceReady(mDevice);
@@ -120,8 +120,8 @@ public class CardViewMingerP50 extends CardView implements ILightActions {
         save.setOnClickListener(view -> {
             if(mDevice!=null) {
                 SharedPreferences.Editor ed = prefs.edit();
-                ed.putString(Constants.PREF_NAME, mDevice.getName());
-                ed.putString(Constants.PREF_MAC, mDevice.getMacAddress());
+                ed.putString(Constants.PREF_MINGER_NAME, mDevice.getName());
+                ed.putString(Constants.PREF_MINGER_MAC, mDevice.getMacAddress());
                 ed.apply();
             }
         });

@@ -3,7 +3,6 @@ package com.telen.sdk.common.layers.impl;
 import android.util.Log;
 
 import com.telen.sdk.common.builder.CommandBuilder;
-import com.telen.sdk.common.exceptions.CommandTimeoutException;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.common.layers.HardwareLayerInterface;
 import com.telen.sdk.common.models.Command;
@@ -17,12 +16,9 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
@@ -33,9 +29,6 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
     private static final long DEFAULT_REQUEST_TIMEOUT_MILLIS = 5000;
     private static final long DEFAULT_RESPONSE_TIMEOUT_MILLIS = 3000;
-
-    private CompositeDisposable mRequestTimeoutDisposable = new CompositeDisposable();
-    private CompositeDisposable mResponseTimeoutDisposable = new CompositeDisposable();
 
     private Map<String, CompositeDisposable> dataListenerDisposableMap = new HashMap<>();
 
@@ -95,7 +88,6 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
 
                         if(command.getRequest().getTimeout() > 0)
                             mRequestTimeout = command.getRequest().getTimeout();
-                        startRequestTimeout(emitter);
 
                         //if we expect some response from remote device, we listen for any response before sending command
                         if(command.getResponse()!=null) {
@@ -103,33 +95,46 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
                             if(command.getResponse().getTimeout() > 0)
                                 mResponseTimeout = command.getResponse().getTimeout();
 
-                            startResponseTimeout(emitter, command.getResponse());
+                            Observable<String> responseObservable = observe(device, command.getResponse());
+                            //only for testing because tests are synchronous
+                            if(mResponseTimeout >= 0) {
+                                responseObservable = responseObservable
+                                        .timeout(mResponseTimeout, TimeUnit.MILLISECONDS)
+                                        .onErrorResumeNext(throwable -> {
+                                            if(command.getResponse().isCompleteOnTimeout())
+                                                return Observable.empty();
+                                            else
+                                                return Observable.error(throwable);
+                                        });
+                            }
 
-                            Disposable listenerDisposable = hardwareInteractionLayer
-                                    .listenResponses(device, command.getResponse())
-                                    .flatMap(response -> dataValidator.validateData(command.getResponse().getFrames(), response)
-                                            .andThen(Observable.just(response))
-                                    )
-                                    .subscribe(s -> {
-                                        emitter.onNext(s);
+                            Disposable listenerDisposable = responseObservable.subscribe(s -> {
+                                emitter.onNext(s);
 
-                                        String endFrame = command.getResponse().getEndFrame();
-                                        if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
-                                            stopResponseTimeout();
-                                            dataListenerDisposable.clear();
-                                            emitter.onComplete();
-                                        }
-                                        else
-                                            resetResponseTimeout(emitter, command.getResponse());
-                                    }, throwable -> {
-                                        if(!emitter.isDisposed())
-                                            emitter.onError(throwable);
-                                    }, () -> {
-                                        emitter.onComplete();
-                                    });
+                                String endFrame = command.getResponse().getEndFrame();
+                                if(endFrame !=null && endFrame.replace(" ","").equals(s)) {
+                                    emitter.onComplete();
+                                    dataListenerDisposable.clear();
+                                }
+                            }, throwable -> {
+                                if(!emitter.isDisposed())
+                                    emitter.onError(throwable);
+                            }, () -> {
+                                if(!emitter.isDisposed())
+                                    emitter.onComplete();
+                            });
                             dataListenerDisposable.add(listenerDisposable);
                         }
-                        return hardwareInteractionLayer.sendCommand(device, command.getRequest(), hexaCommand);
+
+                        Single<String> requestObservable = hardwareInteractionLayer.sendCommand(device, command.getRequest(), hexaCommand);
+                        //only for testing because tests are synchronous
+                        if(mRequestTimeout >= 0) {
+                            requestObservable = requestObservable
+                                    .timeout(mRequestTimeout, TimeUnit.MILLISECONDS);
+                        }
+
+                        return requestObservable;
+
                     })
                     .subscribe(new SingleObserver<String>() {
                         @Override
@@ -140,10 +145,10 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
                         @Override
                         public void onSuccess(String responseFrame) {
                             Log.d(TAG,"Sent -- responseFrame="+responseFrame);
-                            stopRequestTimeout();
                             if(command.getResponse()==null) {
                                 Log.d(TAG,"Don't need to wait for any response, bye bye!");
-                                emitter.onComplete();
+                                if(!emitter.isDisposed())
+                                    emitter.onComplete();
                             }
                         }
 
@@ -173,50 +178,6 @@ public class DataLayerImpl<T extends HardwareLayerInterface> implements DataLaye
                         dataValidator.validateData(response.getFrames(), responseFrame)
                                 .andThen(Observable.just(responseFrame))
                 );
-    }
-
-    private void startTimeout(final ObservableEmitter emitter, final CompositeDisposable disposable, final long timeout, final boolean isCompleteOnTimeout) {
-        if(timeout>0) {
-            disposable.add(
-                    Observable.timer(timeout, TimeUnit.MILLISECONDS)
-                            .subscribe(aLong -> {
-                                    },
-                                    throwable -> {
-                                    },
-                                    () -> {
-                                        if(emitter!=null && !emitter.isDisposed()) {
-                                            if(isCompleteOnTimeout) {
-                                                Log.d(TAG, "Protocol define this timeout as normal so we just finish subscription");
-                                                emitter.onComplete();
-                                            }
-                                            else
-                                                emitter.onError(new CommandTimeoutException("Command timeout triggered"));
-                                        }
-                                    }
-                            )
-            );
-        }
-    }
-
-    private void startRequestTimeout(ObservableEmitter emitter) {
-        startTimeout(emitter, mRequestTimeoutDisposable, mRequestTimeout, false);
-    }
-
-    private void startResponseTimeout(@NonNull ObservableEmitter emitter, @NonNull Response reponse) {
-        startTimeout(emitter, mResponseTimeoutDisposable, mResponseTimeout, reponse.isCompleteOnTimeout());
-    }
-
-    private void stopRequestTimeout() {
-        mRequestTimeoutDisposable.clear();
-    }
-
-    private void stopResponseTimeout() {
-        mResponseTimeoutDisposable.clear();
-    }
-
-    private void resetResponseTimeout(@NonNull ObservableEmitter emitter, @NonNull Response response) {
-        stopResponseTimeout();
-        startResponseTimeout(emitter, response);
     }
 
     public void setRequestTimeout(long timeout) {

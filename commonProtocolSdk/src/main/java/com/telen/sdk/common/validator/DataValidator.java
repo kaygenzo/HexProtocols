@@ -47,6 +47,7 @@ public class DataValidator {
                     switch (type) {
                         case STRING:
                             String obj = (String) value;
+                            //TODO for now it's strict size, maybe let send lower string than the space allowed...
                             if(obj.length() != bytesLength)
                                 emitter.onError(new InvalidPayloadLengthException("Invalid payload size for "+payload.getName()+" : expect " + bytesLength + " bytes but string is length " + obj.length()));
                             break;
@@ -107,27 +108,6 @@ public class DataValidator {
 
             List<Payload> payloads = null;
 
-//            for (Frame frame: frames) {
-//                List<Payload> localPayloads = frame.getPayloads();
-//                if(localPayloads!=null && !localPayloads.isEmpty() && frame.getCommandIndex() < localPayloads.size()) {
-//                    //search for corresponding frame
-//                    Payload payload = localPayloads.get(frame.getCommandIndex());
-//
-//                    if(payload.getValue()!=null && PayloadType.INTEGER.name().equals(payload.getType())) {
-//                        int start = payload.getStart();
-//                        int end = payload.getEnd();
-//
-//                        StringBuilder payloadExtract = new StringBuilder();
-//                        payloadExtract.append(hexString, start * 2, 2 * (end + 1));
-//                        int command = Integer.parseInt(payloadExtract.toString(), 16);
-//                        if (command == Integer.parseInt(payload.getValue())) {
-//                            payloads = localPayloads;
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-
             for (Frame frame: frames) {
                 if (frame.getCommandIndex() >= 0 && frame.getCommandId() >= 0) {
                     StringBuilder payloadExtract = new StringBuilder();
@@ -176,6 +156,7 @@ public class DataValidator {
                     PayloadType payloadType = PayloadType.valueOf(payloadTypeString);
                     switch (payloadType) {
                         case STRING:
+                            //TODO for now it's strict size, maybe let send lower string than the space allowed...
                             String stringValue = BytesUtils.hexStringToAscii(extractHex);
                             if (stringValue.length() != bytesLength)
                                 emitter.onError(new InvalidPayloadLengthException("Invalid payload size: expect " + bytesLength + " characters but string is length " + stringValue.length()));
@@ -183,6 +164,7 @@ public class DataValidator {
                             break;
                         case HEX_STRING:
                             String obj = extractHex;
+                            //FIXME useful this check ?
                             if (obj.length() > bytesLength * 2)
                                 emitter.onError(new InvalidPayloadLengthException("Invalid payload size: expect " + bytesLength + " bytes but string is length " + obj.length()));
                             break;
