@@ -67,3 +67,5 @@ fastlane/test_output
 fastlane/readme.md
 Appfile
 Fastfile
+
+*.DS_Store
