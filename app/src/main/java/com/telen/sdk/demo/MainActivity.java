@@ -11,6 +11,8 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import com.crashlytics.android.Crashlytics;
+import com.telen.sdk.demo.commonui.DeviceInfo;
+import com.telen.sdk.demo.commonui.FirestoreManager;
 
 import javax.inject.Inject;
 

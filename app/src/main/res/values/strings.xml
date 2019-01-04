@@ -1,18 +1,3 @@
 <resources>
     <string name="app_name">HexProtocolDemo</string>
-    <string name="button_title_scan">Scan</string>
-    <string name="button_title_save">Save</string>
-    <string name="button_title_pair">Pair</string>
-    <string name="button_title_connect">Connect</string>
-    <string name="button_title_connect_tcp">Connect TCP</string>
-    <string name="button_title_connect_udp">Connect UDP</string>
-    <string name="button_title_bond">Bond</string>
-    <string name="button_title_disconnect">Disconnect</string>
-    <string name="button_title_process">Process</string>
-
-    <string name="button_title_light_on">Light On</string>
-    <string name="button_title_light_off">Light Off</string>
-    <string name="button_title_color_picker">Color picker</string>
-
-    <string name="button_title_get_weight">Get Weight</string>
 </resources>

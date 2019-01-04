@@ -1,1 +1,1 @@
-include ':app', ':bleProtocolSdk', ':socketProtocolSdk', ':commonProtocolSdk'
+include ':app', ':bleProtocolSdk', ':socketProtocolSdk', ':commonProtocolSdk', ':homous', ':commonui'

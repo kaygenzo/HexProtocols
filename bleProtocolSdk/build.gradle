@@ -43,7 +43,7 @@ dependencies {
     testImplementation 'org.powermock:powermock-module-junit4:1.7.1'
 
     implementation "com.polidea.rxandroidble2:rxandroidble:$rxandroidbleVersion"
-    implementation "io.reactivex.rxjava2:rxandroid:$rxjava2Version"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxandroid2Version"
 
     implementation "com.google.dagger:dagger:$daggerVersion"
     annotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"

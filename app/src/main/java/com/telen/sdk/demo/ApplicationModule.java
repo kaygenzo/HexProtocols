@@ -2,14 +2,8 @@ package com.telen.sdk.demo;
 
 import android.content.Context;
 
-import com.telen.sdk.ble.di.BleDaggerWrapper;
-import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
-import com.telen.sdk.common.di.CommonDaggerWrapper;
-import com.telen.sdk.common.layers.DataLayerInterface;
-import com.telen.sdk.common.models.ResponseFrameFactory;
-import com.telen.sdk.socket.di.SocketDaggerWrapper;
-import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
-import com.telen.sdk.socket.utils.NetworkUtils;
+import com.telen.sdk.demo.commonui.FirestoreManager;
+import com.telen.sdk.demo.commonui.di.DaggerCommonUiWrapper;
 
 import dagger.Module;
 import dagger.Provides;
@@ -25,37 +19,13 @@ public class ApplicationModule {
 
     @Provides
     @ApplicationScope
-    public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(Context context) {
-        return BleDaggerWrapper.getComponent(context).provideDataLayer();
-    }
-
-    @Provides
-    @ApplicationScope
-    public DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer(Context context) {
-        return SocketDaggerWrapper.getComponent(context).provideSocketDataLayer();
-    }
-
-    @Provides
-    @ApplicationScope
     public Context provideContext() {
         return context;
     }
 
     @Provides
     @ApplicationScope
-    public NetworkUtils provideNetworkUtils() {
-        return SocketDaggerWrapper.getComponent(context).provideNetworkUtils();
-    }
-
-    @Provides
-    @ApplicationScope
     public FirestoreManager provideFirestoreManager() {
-        return new FirestoreManager();
-    }
-
-    @Provides
-    @ApplicationScope
-    public ResponseFrameFactory provideResponseFrameFactory() {
-        return CommonDaggerWrapper.getComponent(context).provideResponseFrameFactory();
+        return DaggerCommonUiWrapper.getComponent(context).provideFirestoreManager();
     }
 }

@@ -5,6 +5,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.telen.sdk.demo.commonui.DeviceInfo;
+
 public class DevicesBLEAdapter extends RecyclerView.Adapter<DevicesBLEAdapter.DevicesViewHolder> {
 
     private DeviceInfo[] mDataset;
