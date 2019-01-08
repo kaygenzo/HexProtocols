@@ -137,7 +137,7 @@ dependencies {
         transitive = true
     }
 
-    implementation project(':commonProtocolSdk')
+    implementation project(':common-protocols')
     implementation project(':ble-protocols')
     implementation project(':socket-protocols')
     implementation project(':commonui')

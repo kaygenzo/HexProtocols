@@ -63,7 +63,7 @@ dependencies {
 
     implementation 'com.github.QuadFlask:colorpicker:0.0.13'
 
-    implementation project(':commonProtocolSdk')
+    implementation project(':common-protocols')
     implementation project(':ble-protocols')
     implementation project(':socket-protocols')
 

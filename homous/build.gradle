@@ -98,7 +98,7 @@ dependencies {
     implementation "com.crashlytics.sdk.android:crashlytics:$fabricVersion"
     implementation "com.google.firebase:firebase-core:$firebaseVersion"
 
-    implementation project(':commonProtocolSdk')
+    implementation project(':common-protocols')
     implementation project(':ble-protocols')
     implementation project(':socket-protocols')
     implementation project(':commonui')
