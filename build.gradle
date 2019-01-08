@@ -14,6 +14,11 @@ buildscript {
     }
 }
 
+plugins {
+    id "com.jfrog.bintray" version "1.8.0"
+    id "com.github.dcendents.android-maven" version "1.4.1"
+}
+
 allprojects {
     repositories {
         google()
@@ -35,6 +40,7 @@ ext {
     fabricVersion = "2.9.7"
 }
 
-task clean(type: Delete) {
+task customClean(type: Delete) {
     delete rootProject.buildDir
 }
+clean.dependsOn customClean

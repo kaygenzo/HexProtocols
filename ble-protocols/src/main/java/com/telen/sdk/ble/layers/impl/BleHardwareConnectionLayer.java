@@ -179,8 +179,10 @@ public class BleHardwareConnectionLayer implements HardwareLayerInterface {
             dispose(scanDisposable);
 
             scanDisposable = rxBleClient.scanBleDevices()
-                    .filter(rxBleScanResult ->
-                            rxBleScanResult.getBleDevice().getName()!=null && rxBleScanResult.getBleDevice().getName().contains(deviceName))
+                    .filter(rxBleScanResult -> {
+                        Log.d(TAG,"Found BleDevice: "+rxBleScanResult.getBleDevice().getName());
+                            return rxBleScanResult.getBleDevice().getName()!=null && rxBleScanResult.getBleDevice().getName().contains(deviceName);
+                    })
                     .firstOrError()
                     .flatMapCompletable(rxBleScanResult -> {
                         dispose(scanDisposable);

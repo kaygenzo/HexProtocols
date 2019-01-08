@@ -64,7 +64,7 @@ dependencies {
     implementation 'com.github.QuadFlask:colorpicker:0.0.13'
 
     implementation project(':commonProtocolSdk')
-    implementation project(':bleProtocolSdk')
+    implementation project(':ble-protocols')
     implementation project(':socketProtocolSdk')
 
     implementation "com.google.firebase:firebase-firestore:$firebaseVersion"

@@ -99,7 +99,7 @@ dependencies {
     implementation "com.google.firebase:firebase-core:$firebaseVersion"
 
     implementation project(':commonProtocolSdk')
-    implementation project(':bleProtocolSdk')
+    implementation project(':ble-protocols')
     implementation project(':socketProtocolSdk')
     implementation project(':commonui')
 

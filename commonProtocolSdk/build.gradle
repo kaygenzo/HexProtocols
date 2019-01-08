@@ -1,5 +1,29 @@
 apply plugin: 'com.android.library'
 
+ext {
+    bintrayRepo = 'telen'
+    bintrayName = 'commonProtocolSdk'
+
+    publishedGroupId = 'com.telen.library'
+    libraryName = 'Common Hex Protocol'
+    artifact = 'commonProtocolSdk'
+
+    libraryDescription = 'Provide an easy way to interact with hardware layers and data validation'
+
+    siteUrl = 'https://github.com/kaygenzo/HexProtocols.git'
+    gitUrl = 'https://github.com/kaygenzo/HexProtocols.git'
+
+    libraryVersion = '0.0.1'
+
+    developerId = 'kaygenzo'
+    developerName = 'Karim Yarboua'
+    developerEmail = 'karim.yarboua@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
 android {
     compileSdkVersion 27
 
@@ -52,3 +76,6 @@ dependencies {
     implementation "com.google.dagger:dagger:$daggerVersion"
     annotationProcessor "com.google.dagger:dagger-compiler:$daggerVersion"
 }
+
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/install.gradle'
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/bintray.gradle'
