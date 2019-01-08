@@ -100,7 +100,7 @@ dependencies {
 
     implementation project(':commonProtocolSdk')
     implementation project(':ble-protocols')
-    implementation project(':socketProtocolSdk')
+    implementation project(':socket-protocols')
     implementation project(':commonui')
 
     //for preview rendering

@@ -65,7 +65,7 @@ dependencies {
 
     implementation project(':commonProtocolSdk')
     implementation project(':ble-protocols')
-    implementation project(':socketProtocolSdk')
+    implementation project(':socket-protocols')
 
     implementation "com.google.firebase:firebase-firestore:$firebaseVersion"
     implementation "com.google.firebase:firebase-core:$firebaseVersion"
