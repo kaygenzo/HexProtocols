@@ -1,5 +1,13 @@
 apply plugin: 'com.android.library'
 
+ext {
+    bintrayName = 'socket-protocols'
+    libraryName = 'SocketHexProtocol'
+    artifact = 'socket-protocols'
+    libraryDescription = 'This library intends to provide an easy way to interact with the Sockets devices with a simple protocol file.'
+    libraryVersion = '0.0.1'
+}
+
 android {
     compileSdkVersion 27
 
@@ -54,3 +62,6 @@ dependencies {
 
     implementation "com.squareup.okhttp3:okhttp:$okhttp3Version"
 }
+
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/install.gradle'
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/bintray.gradle'

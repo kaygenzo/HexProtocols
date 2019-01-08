@@ -38,6 +38,20 @@ ext {
     supportVersion = "27.1.1"
     rxandroidbleVersion = "1.7.1"
     fabricVersion = "2.9.7"
+
+    bintrayRepo = 'telen'
+    publishedGroupId = 'com.telen.library'
+
+    siteUrl = 'https://github.com/kaygenzo/HexProtocols.git'
+    gitUrl = 'https://github.com/kaygenzo/HexProtocols.git'
+
+    developerId = 'kaygenzo'
+    developerName = 'Karim Yarboua'
+    developerEmail = 'karim.yarboua@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
 }
 
 task customClean(type: Delete) {

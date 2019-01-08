@@ -1,5 +1,13 @@
 apply plugin: 'com.android.library'
 
+ext {
+    bintrayName = 'ble-protocols'
+    libraryName = 'BLEHexProtocol'
+    artifact = 'ble-protocols'
+    libraryDescription = 'This library intends to provide an easy way to interact with the BLE devices with a simple protocol file.'
+    libraryVersion = '0.0.1'
+}
+
 android {
     compileSdkVersion 27
 
@@ -52,3 +60,5 @@ dependencies {
 }
 
 apply from: 'jacoco.gradle'
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/install.gradle'
+apply from: 'https://raw.githubusercontent.com/kaygenzo/bintray/master/bintray.gradle'
