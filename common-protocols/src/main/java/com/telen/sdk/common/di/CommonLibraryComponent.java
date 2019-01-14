@@ -13,8 +13,8 @@ import dagger.Component;
 })
 @CommonScope
 public interface CommonLibraryComponent {
-    ResponseFrameFactory provideResponseFrameFactory();
-    DataValidator provideDataValidator();
-    CommandBuilder provideHexBuilder();
+    ResponseFrameFactory getResponseFrameFactory();
+    DataValidator getDataValidator();
+    CommandBuilder getHexBuilder();
     Context provideContext();
 }

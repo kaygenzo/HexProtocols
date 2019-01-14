@@ -1,24 +1,13 @@
 package com.telen.sdk.demo.commonui.devices.ribbon;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
 public class CommandResponse {
 
-    @SerializedName("OK")
-    @Expose
     private boolean ok;
 
-    @SerializedName("err_code")
-    @Expose
     private int errCode;
 
-    @SerializedName("err_msg")
-    @Expose
     private String errMsg;
 
-    @SerializedName("Result")
-    @Expose
     private String result;
 
     public boolean isOk() {

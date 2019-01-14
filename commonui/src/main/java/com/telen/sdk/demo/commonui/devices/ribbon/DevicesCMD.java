@@ -1,18 +1,12 @@
 package com.telen.sdk.demo.commonui.devices.ribbon;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import com.telen.sdk.common.utils.BytesUtils;
 
 import java.util.Map;
 
 public abstract class DevicesCMD {
 
-    @SerializedName("hexData")
-    @Expose
     private String hexData;
-    @SerializedName("macAddress")
-    @Expose
     private String macAddress;
 
     public String getHexData() {

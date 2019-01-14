@@ -2,13 +2,13 @@ package com.telen.sdk.ble.di;
 
 import android.content.Context;
 
-import com.telen.sdk.common.di.CommonDaggerWrapper;
+import com.telen.sdk.common.di.CommonProtocolsManager;
 
-public class BleDaggerWrapper {
+public class BleManager {
 
     private static BleLibraryComponent mComponent;
 
-    public static BleLibraryComponent getComponent(Context context) {
+    public static BleLibraryComponent getInstance(Context context) {
         if (mComponent == null) {
             initComponent(context);
         }
@@ -18,7 +18,7 @@ public class BleDaggerWrapper {
     private static void initComponent (Context context) {
         mComponent = DaggerBleLibraryComponent
                 .builder()
-                .commonLibraryComponent(CommonDaggerWrapper.getComponent(context))
+                .commonLibraryComponent(CommonProtocolsManager.getInstance(context))
                 .build();
     }
 }

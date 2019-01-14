@@ -14,6 +14,6 @@ import dagger.Component;
 })
 @SocketScope
 public interface SocketLibraryComponent {
-    DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer();
-    NetworkUtils provideNetworkUtils();
+    DataLayerInterface<SocketHardwareConnectionLayer> getDataLayer();
+    NetworkUtils getNetworkUtils();
 }

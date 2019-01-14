@@ -2,15 +2,15 @@ package com.telen.sdk.demo.commonui.di;
 
 import android.content.Context;
 
-import com.telen.sdk.ble.di.BleDaggerWrapper;
+import com.telen.sdk.ble.di.BleManager;
 import com.telen.sdk.ble.layers.impl.BleHardwareConnectionLayer;
-import com.telen.sdk.common.di.CommonDaggerWrapper;
+import com.telen.sdk.common.di.CommonProtocolsManager;
 import com.telen.sdk.common.layers.DataLayerInterface;
 import com.telen.sdk.common.models.ResponseFrameFactory;
 import com.telen.sdk.demo.commonui.FirestoreManager;
 import com.telen.sdk.demo.commonui.devices.minger.MingerManager;
 import com.telen.sdk.demo.commonui.devices.minger.Minger_P50;
-import com.telen.sdk.socket.di.SocketDaggerWrapper;
+import com.telen.sdk.socket.di.SocketManager;
 import com.telen.sdk.socket.layers.SocketHardwareConnectionLayer;
 import com.telen.sdk.socket.utils.NetworkUtils;
 
@@ -29,13 +29,13 @@ public class CommonUIModule {
     @Provides
     @CommonUIScope
     public DataLayerInterface<BleHardwareConnectionLayer> provideBleDataLayer(Context context) {
-        return BleDaggerWrapper.getComponent(context).provideDataLayer();
+        return BleManager.getInstance(context).getDataLayer();
     }
 
     @Provides
     @CommonUIScope
     public DataLayerInterface<SocketHardwareConnectionLayer> provideSocketDataLayer(Context context) {
-        return SocketDaggerWrapper.getComponent(context).provideSocketDataLayer();
+        return SocketManager.getInstance(context).getDataLayer();
     }
 
     @Provides
@@ -47,7 +47,7 @@ public class CommonUIModule {
     @Provides
     @CommonUIScope
     public NetworkUtils provideNetworkUtils() {
-        return SocketDaggerWrapper.getComponent(context).provideNetworkUtils();
+        return SocketManager.getInstance(context).getNetworkUtils();
     }
 
     @Provides
@@ -59,7 +59,7 @@ public class CommonUIModule {
     @Provides
     @CommonUIScope
     public ResponseFrameFactory provideResponseFrameFactory() {
-        return CommonDaggerWrapper.getComponent(context).provideResponseFrameFactory();
+        return CommonProtocolsManager.getInstance(context).getResponseFrameFactory();
     }
 
     @Provides

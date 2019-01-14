@@ -2,13 +2,13 @@ package com.telen.sdk.socket.di;
 
 import android.content.Context;
 
-import com.telen.sdk.common.di.CommonDaggerWrapper;
+import com.telen.sdk.common.di.CommonProtocolsManager;
 
-public class SocketDaggerWrapper {
+public class SocketManager {
 
     private static SocketLibraryComponent mComponent;
 
-    public static SocketLibraryComponent getComponent(Context context) {
+    public static SocketLibraryComponent getInstance(Context context) {
         if (mComponent == null) {
             initComponent(context);
         }
@@ -18,7 +18,7 @@ public class SocketDaggerWrapper {
     private static void initComponent (Context context) {
         mComponent = DaggerSocketLibraryComponent
                 .builder()
-                .commonLibraryComponent(CommonDaggerWrapper.getComponent(context))
+                .commonLibraryComponent(CommonProtocolsManager.getInstance(context))
                 .build();
     }
 }

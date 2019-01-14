@@ -13,6 +13,7 @@ import com.telen.sdk.socket.devices.SocketDevice;
 import com.telen.sdk.socket.utils.TCPSocketManager;
 import com.telen.sdk.socket.utils.UDPSocketManager;
 
+import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.Socket;
@@ -30,8 +31,8 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private static final String TAG = SocketHardwareConnectionLayer.class.getSimpleName();
 
-    private Socket mSocket;
-    private DatagramSocket datagramSocket;
+    private Socket tcpSocket;
+    private DatagramSocket udpSocket;
 
     private Context mContext;
     private final OkHttpClient mHttpClient;
@@ -57,25 +58,35 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
                 RequestType requestType = socketDevice.getType();
                 switch (requestType) {
                     case tcp:
+
+                        try {
+                            closeSockets();
+                        }
+                        catch (IOException e) {
+                            Log.e(TAG, "Impossible to close sockets", e);
+                        }
+
                         int port = socketDevice.getPort();
                         String address = socketDevice.getAddress();
 
-                        if(mSocket!=null && mSocket.isConnected())
-                            mSocket.close();
-
                         try {
-                            mSocket = mHttpClient.socketFactory().createSocket(Inet4Address.getByName(address), port);
+                            tcpSocket = mHttpClient.socketFactory().createSocket(Inet4Address.getByName(address), port);
                             emitter.onComplete();
                         } catch (Exception e) {
                             emitter.onError(e);
                         }
                         break;
                     case udp:
-                        if(datagramSocket!=null)
-                            datagramSocket.close();
 
                         try {
-                            datagramSocket =  new DatagramSocket();
+                            closeSockets();
+                        }
+                        catch (IOException e) {
+                            Log.e(TAG, "Impossible to close sockets", e);
+                        }
+
+                        try {
+                            udpSocket =  new DatagramSocket();
                             emitter.onComplete();
                         }
                         catch (Exception e) {
@@ -90,10 +101,12 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
     @Override
     public Completable disconnect(Device device) {
         return Completable.create(emitter -> {
-            if(mSocket!=null && mSocket.isConnected())
-                mSocket.close();
-            if(datagramSocket!=null)
-                datagramSocket.close();
+            try {
+                closeSockets();
+            }
+            catch (IOException e) {
+                Log.e(TAG, "Impossible to close sockets", e);
+            }
             emitter.onComplete();
         });
     }
@@ -154,13 +167,13 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
             SocketDevice socketDevice = (SocketDevice)device;
             switch (socketDevice.getType()) {
                 case tcp:
-                    if(mSocket!=null && mSocket.isConnected())
+                    if(tcpSocket !=null && !tcpSocket.isClosed())
                         emitter.onSuccess(Boolean.TRUE);
                     else
                         emitter.onSuccess(Boolean.FALSE);
                         break;
                 case udp:
-                    if(datagramSocket!=null && datagramSocket.isConnected())
+                    if(udpSocket !=null && !udpSocket.isClosed())
                         emitter.onSuccess(Boolean.TRUE);
                     else
                         emitter.onSuccess(Boolean.FALSE);
@@ -173,8 +186,8 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private Single<String> listenUDPResponse() {
         return Single.create(emitter -> {
-            if(datagramSocket!=null) {
-                Disposable  disposable = udpSocketManager.listenResponse(datagramSocket, 2048)
+            if(udpSocket !=null) {
+                Disposable  disposable = udpSocketManager.listenResponse(udpSocket, 2048)
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .subscribe(s -> {
@@ -195,8 +208,8 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private Completable sendUDPRequest(final byte[] message, Request request) {
         return Completable.create(emitter -> {
-            if(datagramSocket!=null) {
-                Disposable sendDisposable = udpSocketManager.sendRequest(datagramSocket,message, request.getAddress(), request.getPort(), request.isBroadcast())
+            if(udpSocket !=null) {
+                Disposable sendDisposable = udpSocketManager.sendRequest(udpSocket,message, request.getAddress(), request.getPort(), request.isBroadcast())
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .subscribe(() -> {
@@ -220,8 +233,8 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private Completable sendTCPCommand(Request request, byte[] dataToSend) {
         return Completable.create(emitter -> {
-            if(mSocket!=null) {
-                Disposable sendDisposable = tcpSocketManager.sendTCPMessage(mSocket.getOutputStream(), dataToSend)
+            if(tcpSocket !=null) {
+                Disposable sendDisposable = tcpSocketManager.sendTCPMessage(tcpSocket.getOutputStream(), dataToSend)
                         .subscribeOn(Schedulers.io())
                         .observeOn(Schedulers.io())
                         .subscribe(() -> {
@@ -243,8 +256,8 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
 
     private Observable<String> listenTCPResponse() {
         return Observable.create(emitter -> {
-            if(mSocket!=null && mSocket.isConnected()) {
-                Disposable  disposable = tcpSocketManager.listenTCPMessage(mSocket.getInputStream())
+            if(tcpSocket !=null && tcpSocket.isConnected()) {
+                Disposable  disposable = tcpSocketManager.listenTCPMessage(tcpSocket.getInputStream())
                         .subscribe(s -> {
                             if(!emitter.isDisposed())
                                 emitter.onNext(s);
@@ -261,5 +274,13 @@ public class SocketHardwareConnectionLayer implements HardwareLayerInterface {
                 emitter.onError(new Exception("Socket not ready!"));
             }
         });
+    }
+
+    private void closeSockets() throws IOException {
+        if(tcpSocket !=null)
+            tcpSocket.close();
+
+        if(udpSocket !=null)
+            udpSocket.close();
     }
 }

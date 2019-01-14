@@ -2,29 +2,16 @@ package com.telen.sdk.demo.commonui.devices.ribbon;
 
 import android.util.Log;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
 public class DeviceCommand {
 
     private static final String TAG = DeviceCommand.class.getSimpleName();
 
-    @SerializedName("AppSys")
-    @Expose
     private String appSys;
-    @SerializedName("Timestamp")
-    @Expose
     private long timestamp;
-    @SerializedName("AppVer")
-    @Expose
     private String appVer;
-    @SerializedName("CheckCode")
-    @Expose
     private String checkCode;
-    @SerializedName("DevicesCMDs")
-    @Expose
     private List<DevicesCMD> devicesCMDs = null;
 
     public String getAppSys() {

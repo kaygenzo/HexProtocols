@@ -13,5 +13,5 @@ import dagger.Component;
 })
 @BleScope
 public interface BleLibraryComponent {
-    DataLayerInterface<BleHardwareConnectionLayer> provideDataLayer();
+    DataLayerInterface<BleHardwareConnectionLayer> getDataLayer();
 }

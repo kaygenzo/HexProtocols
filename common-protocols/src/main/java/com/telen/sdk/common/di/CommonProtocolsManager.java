@@ -2,11 +2,11 @@ package com.telen.sdk.common.di;
 
 import android.content.Context;
 
-public class CommonDaggerWrapper {
+public class CommonProtocolsManager {
 
     private static CommonLibraryComponent mComponent;
 
-    public static CommonLibraryComponent getComponent(Context context) {
+    public static CommonLibraryComponent getInstance(Context context) {
         if (mComponent == null) {
             initComponent(context);
         }

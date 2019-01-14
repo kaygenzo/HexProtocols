@@ -16,7 +16,7 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.8.0"
-    id "com.github.dcendents.android-maven" version "1.4.1"
+    id "com.github.dcendents.android-maven" version "2.1"
 }
 
 allprojects {
@@ -48,6 +48,7 @@ ext {
     developerId = 'kaygenzo'
     developerName = 'Karim Yarboua'
     developerEmail = 'karim.yarboua@gmail.com'
+    libraryVersion = '0.0.5'
 
     licenseName = 'The Apache Software License, Version 2.0'
     licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'

@@ -5,7 +5,6 @@ ext {
     libraryName = 'BLEHexProtocol'
     artifact = 'ble-protocols'
     libraryDescription = 'This library intends to provide an easy way to interact with the BLE devices with a simple protocol file.'
-    libraryVersion = '0.0.1'
 }
 
 android {
@@ -46,7 +45,6 @@ dependencies {
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.8.9'
-
     testImplementation 'org.powermock:powermock-api-mockito2:1.7.1'
     testImplementation 'org.powermock:powermock-module-junit4:1.7.1'
 
