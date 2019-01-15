@@ -1,6 +1,6 @@
 [![GitHub license](https://img.shields.io/github/license/kaygenzo/HexProtocols.svg)](https://github.com/kaygenzo/HexProtocols/blob/develop/LICENSE)
 [![GitHub version](https://badge.fury.io/gh/kaygenzo%2FHexProtocols.svg)](https://github.com/kaygenzo/HexProtocols)
-
+[ ![Download](https://api.bintray.com/packages/kaygenzo/telen/common-protocols/images/download.svg) ](https://bintray.com/kaygenzo/telen/common-protocols/_latestVersion)
 
 # Hex Protocols
 
