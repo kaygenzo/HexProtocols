@@ -47,7 +47,9 @@ public class CardViewLightRibbon extends CardView implements ILightActions {
     private Button process;
 
     @Inject FirestoreManager mFirestoreManager;
-    final SocketDevice mDevice = new SocketDevice(LightRibbon.class.getSimpleName());
+    final SocketDevice mDevice = new SocketDevice.Builder()
+            .withName(LightRibbon.class.getSimpleName())
+            .build();
 
     private CompositeDisposable slideDisposable = new CompositeDisposable();
     private CompositeDisposable firestoreActionDisposable = new CompositeDisposable();

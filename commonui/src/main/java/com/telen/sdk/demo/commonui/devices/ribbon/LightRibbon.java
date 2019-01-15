@@ -89,7 +89,9 @@ public class LightRibbon implements GenericNetworkDevice {
     public Single<Device> scan() {
         return getRemoteAddress().map(remoteAddress -> {
             Log.d(TAG, "complete!!");
-            SocketDevice socketDevice = new SocketDevice(LightRibbon.class.getSimpleName());
+            SocketDevice socketDevice = new SocketDevice.Builder()
+                    .withName(LightRibbon.class.getSimpleName())
+                    .build();
             socketDevice.setAddress(remoteAddress);
             return socketDevice;
         });
