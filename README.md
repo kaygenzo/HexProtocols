@@ -1,355 +1,194 @@
 [![GitHub license](https://img.shields.io/github/license/kaygenzo/HexProtocols.svg)](https://github.com/kaygenzo/HexProtocols/blob/develop/LICENSE)
-[![GitHub version](https://badge.fury.io/gh/kaygenzo%2FHexProtocols.svg)](https://github.com/kaygenzo/HexProtocols)
-[ ![Download](https://api.bintray.com/packages/kaygenzo/telen/common-protocols/images/download.svg) ](https://bintray.com/kaygenzo/telen/common-protocols/_latestVersion)
 
 # Hex Protocols
 
-This project intends to provide an easy way to interact with BLE and Sockets devices by describing commands through a simple protocol file.
+Hex Protocols lets you drive a hardware device — over BLE, TCP/UDP sockets, or any other transport
+— by describing its wire protocol in a JSON file, instead of hand-writing byte-packing code for
+every command. You author a schema (which bytes go where, what type they are, what a response
+looks like); the library builds the outgoing frame, sends it, and decodes the response back into
+named values.
 
-## Installation of BLE library
+The core schema, codec, and orchestration engine know nothing about BLE, sockets, or any other
+specific technology — a `Transport` and a `RouteConfig` implementation is all a new technology
+needs to plug in. See [Architecture](#architecture) below.
 
-First, you will need at least the basic protocols library which is common to all the hardware provided libraries. Then, you will need to add the BLE library or/and the socket library to interact with the remote devices.
+## Modules
 
+| Module | What it is |
+| --- | --- |
+| `protocol-core` | The transport-agnostic schema, codec, `ProtocolEngine`, and JSON parser. Depend on this plus whichever transport(s) you need. |
+| `transport-socket` | TCP/UDP `Transport` implementation (`TcpRoute`, `UdpRoute`). |
+| `transport-ble` | BLE `Transport` implementation (`BleRoute`), built on a small `GattApi` seam so the GATT-calling code stays out of your test suite. |
+| `sample-app` | A minimal Compose app driving a socket device and a BLE device through nothing but the public API — the best place to see real usage end to end. |
+
+## Installation
+
+This project isn't published to a public repository yet. Until it is, the most direct way to
+consume it is a Gradle composite build (`includeBuild("path/to/HexProtocols")` in your
+`settings.gradle.kts`), or to publish it to your local Maven cache and depend on that:
 
 ```bash
-implementation "com.telen.library:common-protocols:x.y.z"
-implementation "com.telen.library:ble-protocols:x.y.z"
-implementation "com.telen.library:socket-protocols:x.y.z"
+./gradlew publishToMavenLocal
+```
+
+```kotlin
+// your project's settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        // ... your other repositories
+    }
+}
+```
+
+```kotlin
+// your module's build.gradle.kts
+dependencies {
+    implementation("com.telen.protocols:protocol-core:0.1.0")
+    implementation("com.telen.protocols:transport-socket:0.1.0") // and/or
+    implementation("com.telen.protocols:transport-ble:0.1.0")
+}
 ```
 
 ## Usage
 
-First you need to define a protocol file. The protocol file is a json file with a specific structure. It has to be located into the assets of your project. The file name will be injected into an object DeviceConfiguration which will parse the json file and let you use the library. To create a device configuration object, simply use
+Parse a device's protocol file (an Android asset here, but `ProtocolSource` is just a functional
+interface — anything that hands back an `InputStream` works):
 
-```Java
-ProtocolConfiguration.parse(mContext,"filename");
-```
-
-Then you need to get an instance of the data layer and link it to the desired hardware layer.
-
-To get the instance of the BLE data layer
-
-```java
-import com.telen.sdk.ble.di.BleManager;
-DataLayerInterface<BleHardwareConnectionLayer> dataLayer = BleManager.getInstance(context).getDataLayer();
-```
-
-To get the instance of the socket data layer
-
-```java
-import com.telen.sdk.socket.di.SocketManager;
-DataLayerInterface<SocketHardwareConnectionLayer> dataLayer = SocketManager.getInstance(context).getDataLayer();
-```
-
-Finally you will need an instance of a Device object to interact with all layers.
-
-```java
-import com.telen.sdk.common.models.Device;
-Device device = new Device(deviceName, macAddress);
-```
-
-The socket library define an inherited object
-
-```java
-import com.telen.sdk.socket.devices.SocketDevice;
-final SocketDevice mDevice = new SocketDevice.Builder()
-            .withName("LED")
-            .withAddress("localhost")
-            .withPort(65000)
-            .withType(RequestType.tcp)
-            .build();
-```
-Now you are ready to begin!
-
-Launching a command:
-
-```java
-Map<String, Object> data = new HashMap<>();
-data.put("RED",0);
-data.put("GREEN",0);
-data.put("BLUE",0);
-data.put("LUMINOSITY_1",255);
-data.put("LUMINOSITY_2",255);
-return dataLayer.sendCommand(device, deviceConfiguration.getCommand("CHANGE_COLOR"),data)
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread());
-```
-
-Connect to a remote device
-
-```java
-return dataLayer.connect(device, createBond)
-               .subscribeOn(Schedulers.io())
-               .observeOn(AndroidSchedulers.mainThread());
-```
-
-### BLE file protocol
-
-```json
-{
-  "deviceNames": ["deviceName[MANDATORY]"],
-  "commands": [
-    {
-      "identifier": "your_identifier[MANDATORY]",
-      "request": {
-        "service": "your_service_uuid[MANDATORY]",
-        "characteristic": "your_characteristic_uuid[MANDATORY]",
-        "length": "wanted_bytes_length",
-        "payloads": [
-          <!-- Payload structure, see below-->
-        ]
-      },
-      "response": {
-        "service": "your_service_uuid[MANDATORY]",
-        "characteristic": "your_characteristic_uuid[MANDATORY]",
-        "type": "indication|notification",
-        "length": "expected_bytes_length",
-        "frames": [
-          {
-            "commandId": "command_identifier_value[MANDATORY]",
-            "commandIndex": "command_identifier_index[MANDATORY]",
-            "payloads": [
-              <!-- Payload structure, see below-->
-            ]
-          }
-        ]
-      }
-    }
-  ]
+```kotlin
+val json = Json {
+    classDiscriminator = "type"
+    serializersModule = SocketRouteModule + BleRouteModule // compose whichever transports you use
 }
+val protocol = ProtocolConfigParser(json).parse(AssetProtocolSource(context, "my_device.json"))
 ```
 
-### Socket file protocol
+Drive a socket device:
 
-```json
-{
-  "deviceNames": ["deviceName[MANDATORY]"],
-  "commands": [
-    {
-      "identifier": "your_identifier[MANDATORY]",
-      "request": {
-        "address": "address",
-        "port": "port",
-        "type": "udp|tcp[MANDATORY]",
-        "length": "wanted_bytes_length",
-        "payloads": [
-          <!-- Payload structure, see below-->
-        ]
-      },
-      "response": {
-        "type": "udp|tcp[MANDATORY]",
-        "isBroadcast": "true|false",
-        "length": "expected_bytes_length",
-        "frames": [
-          {
-            "commandId": "command_identifier_value[MANDATORY]",
-            "commandIndex": "command_identifier_index[MANDATORY]",
-            "payloads": [
-              <!-- Payload structure, see below-->
-            ]
-          }
-        ]
-      }
-    }
-  ]
-}
+```kotlin
+val engine = ProtocolEngine(SocketTransport())
+val command = protocol.command("LIGHT_ON")!!
+val route = (command.request!!.route as TcpRoute).copy(address = "192.168.1.50")
+engine.execute(command, values = mapOf("CHECKSUM" to checksum), routeOverride = route)
+    .collect { result -> /* Outcome.Success or Outcome.Failure */ }
 ```
 
-The blocks request and response are not mandatory. However if you define them, please do be careful around mandatory fields inside the defined objects.
+`routeOverride` is how you supply information the schema can't know ahead of time — an IP address
+found via a discovery command, for instance — without mutating anything shared: each call gets an
+immutable, independently addressed route.
 
-The Payload object is defined as follow:
+Drive a BLE device:
 
-```json
-{
-  "name": "command_identifier",
-  "direction": "LTR|RTL",
-  "start": "byte_start",
-  "end": "byte_end",
-  "type": "byte_type",
-  "value": "byte_default_value",
-  "min": "byte_min_value",
-  "max": "byte_max_value"
-}
+```kotlin
+val transport = BleTransport(AndroidGattApi(context))
+transport.connect(BleTarget(macAddress = "AA:BB:CC:DD:EE:FF"))
+engine.execute(protocol.command("CHANGE_COLOR")!!, values = mapOf("RED" to 255, "GREEN" to 0, "BLUE" to 0))
 ```
 
-Type of payload can be either:
+See `sample-app` for a complete, runnable example of both.
 
-| Type       | Description |
-| ---------- | ----------- |
-| INTEGER    | Integer value |
-| LONG       | Long value |
-| HEX        | String value representing hexadecimal value. For instance "0xFFFF" |
-| HEX_STRING | Hexa string which will be cut by packet of 2 characters and transformed into java byte. Example "0FFF" |
-| STRING     | String which will be converted to hexa value, and converted into java byte. Ex "FRANCE" -> "4652414e4345" -> java bytes
-| ASCII      | Raw ascii which will be directly converted to java bytes. Ex "ALT+Z" -> java bytes
+## Protocol file format
 
-### Examples
-
-If you want to listen to the answers on a ble characteristic, an example of
-json protocol file could be:
+A protocol file describes one device: its name(s), and the commands it understands.
 
 ```json
 {
   "deviceNames": ["MyDevice"],
   "commands": [
     {
-      "identifier": "AWSOME_COMMAND",
-      "response": {
-        "service": "0000XXXX-0000-1000-8000-00805f9b34fb",
-        "characteristic": "0000YYYY-0000-1000-8000-00805f9b34fb",
-        "type": "indication",
-        "length": 20,
-        "frames": [
-          {
-            "commandId": 160,
-            "commandIndex": 0,
-            "payloads": [
-              {
-                "name": "COMMAND_ID",
-                "start": 0,
-                "end": 0,
-                "type": "HEX",
-                "value": "0xa0"
-              },
-              {
-                "name": "PASSWORD",
-                "start": 1,
-                "end": 4,
-                "type": "HEX_STRING"
-              }
-            ]
-          },
-          {
-            "commandId": 161,
-            "commandIndex": 0,
-            "payloads": [
-              {
-                "name": "COMMAND_ID",
-                "start": 0,
-                "end": 0,
-                "type": "HEX",
-                "value": "0xa1"
-              },
-              {
-                "name": "AWSOME_NUMBER",
-                "start": 1,
-                "end": 4,
-                "type": "HEX_STRING"
-              }
-            ]
-          },
-          {
-            "commandId": 162,
-            "commandIndex": 0,
-            "payloads": [
-              {
-                "name": "COMMAND_ID",
-                "start": 0,
-                "end": 0,
-                "type": "HEX",
-                "value": "0x83"
-              },
-              {
-                "name": "AGE",
-                "start": 1,
-                "end": 1,
-                "type": "INTEGER",
-                "min": 1,
-                "max": 255
-              }
-            ]
-          }
-        ]
-      }
+      "identifier": "COMMAND_NAME",
+      "request": { "...": "see below" },
+      "response": { "...": "see below, optional — omit for fire-and-forget commands" }
     }
   ]
 }
 ```
 
-In this case you listen to multiple different responses on the characteristic 0000YYYY-0000-1000-8000-00805f9b34fb, each responses will be represented by an id at the byte index 0, and the values of this byte can be [160-162].
-
-If you want to launch a command and don't care about the response:
+`request`/`response` share the same shape:
 
 ```json
 {
-  "identifier": "SEND_TIME",
-  "request": {
-    "service": "0000XXXX-0000-1000-8000-00805f9b34fb",
-    "characteristic": "0000YYYY-0000-1000-8000-00805f9b34fb",
-    "length": 5,
-    "payloads": [
-      {
-        "name": "COMMAND_ID",
-        "start": 0,
-        "end": 0,
-        "type": "HEX",
-        "value": "0x02"
-      },
-      {
-        "name": "UTC",
-        "direction": "RTL",
-        "start": 1,
-        "end": 4,
-        "type": "LONG"
-      }
-    ]
-  }
+  "route": { "type": "tcp", "port": 5577 },
+  "layout": "BINARY",
+  "length": 4,
+  "timeout": 0,
+  "payloads": [ { "...": "see below" } ],
+  "frames": [ { "commandId": 1, "commandIndex": 0, "payloads": [ "..." ] } ]
 }
 ```
 
-If you want to launch a socket command over Wifi
+- **`route`** is polymorphic on a `"type"` discriminator, owned by whichever transport module you
+  depend on: `{ "type": "tcp", "port": ... }` / `{ "type": "udp", "port": ..., "isBroadcast": ... }`
+  from `transport-socket`, or `{ "type": "ble", "service": "...", "characteristic": "..." }` from
+  `transport-ble`. A new transport contributes its own route shape without touching `protocol-core`
+  or any existing transport.
+- **`layout`** is `BINARY` (payloads packed at fixed byte offsets — the default) or `TEXT` (payloads
+  concatenated in declared order with no offsets, for AT-command-style protocols).
+- **`length`** pads a `BINARY` frame to at least this many bytes.
+- **`timeout`** (milliseconds) bounds how long a response is awaited; omit or leave at `0` for no
+  timeout.
+- **`frames`** (response only) lists the possible shapes an incoming message can take, disambiguated
+  by a discriminator byte at `commandIndex` equal to `commandId`. A single frame needs no
+  discriminator.
+
+A `payload` is one field within a frame:
 
 ```json
 {
-  "deviceNames": ["LED"],
-  "commands": [
-    {
-      "identifier": "REBOOT",
-      "request": {
-        "type": "udp",
-        "port": 48899,
-        "payloads": [
-          {
-            "name": "MESSAGE",
-            "type": "ASCII",
-            "value": "AT+Z\r"
-          }
-        ]
-      },
-      "response": {
-        "type": "udp"
-      }
-    },
-    {
-     "identifier": "GET_REMOTE_ADDRESS",
-     "request": {
-       "type": "udp",
-       "port": 48899,
-       "isBroadcast": true,
-       "payloads": [
-         {
-           "name": "MESSAGE",
-           "type": "ASCII",
-           "value": "HF-A11ASSISTHREAD"
-         }
-       ]
-     },
-     "response": {
-       "type": "udp"
-     }
-   }
-  ]
+  "name": "RED",
+  "start": 0,
+  "end": 0,
+  "type": "INTEGER",
+  "direction": "LTR",
+  "value": "0",
+  "min": "0",
+  "max": "255"
 }
 ```
 
-Find more examples within the assets of the demo application.
+- **`start`/`end`** are inclusive byte offsets (only meaningful for `BINARY` layout). Either can be
+  negative, counted from the end of the frame (Kotlin-slice style), and `end` can be omitted to mean
+  "the rest of the frame" — useful for a variable-length field followed by a fixed-size trailer.
+- **`type`** is one of `HEX`, `HEX_STRING`, `STRING`, `INTEGER`, `LONG`, `ASCII`.
+- **`direction`** is `LTR` (default) or `RTL` to reverse byte order.
+- **`value`** is a fixed/default value, used when the caller doesn't supply one for this payload's
+  `name` in the `values` map passed to `ProtocolEngine.execute`.
+- **`min`**/**`max`** bound `INTEGER`/`LONG` values, enforced on both encode and decode.
+
+## Extending to a new transport
+
+1. Depend on `protocol-core` only.
+2. Implement `RouteConfig` (a plain marker interface — no shared base class to touch) for whatever
+   addressing information your technology needs, and register it into a `SerializersModule` your
+   app composes at JSON-parsing time.
+3. Implement `Transport`: `connect`/`disconnect` for whatever session concept your technology has
+   (or a no-op if it doesn't — see `SocketTransport`), `send` to write a frame, `observe` to expose
+   incoming frames as a `Flow<ByteArray>`.
+
+`protocol-core`'s schema, codec, and `ProtocolEngine` never change — see
+`protocol-core`'s `ApduReadinessTest` for a worked proof that the same model already covers a
+structurally different transport (APDU/ISO-7816 command/response framing) before a single line of
+transport code exists.
+
+## Testing
+
+Every module's tests run against real I/O where that's possible (real loopback sockets in
+`transport-socket`) or a faked seam where it isn't (BLE requires real hardware, so `transport-ble`
+fakes its `GattApi` instead of Android's `BluetoothGatt`). None of the library modules ship or
+depend on any specific device's protocol file — those belong to the app that uses the library, as
+`sample-app`'s assets demonstrate.
+
+```bash
+./gradlew build
+```
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-Please make sure to update tests as appropriate.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would
+like to change. Please make sure to update tests as appropriate.
 
 ## License
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

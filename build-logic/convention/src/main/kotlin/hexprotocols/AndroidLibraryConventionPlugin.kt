@@ -21,6 +21,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
         pluginManager.apply("hexprotocols.comment-length")
+        pluginManager.apply("hexprotocols.publishing")
 
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
