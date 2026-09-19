@@ -20,6 +20,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.android")
+        pluginManager.apply("hexprotocols.comment-length")
 
         val libs = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
@@ -58,9 +59,5 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())
             add("testImplementation", libs.findLibrary("turbine").get())
         }
-
-        val checkCommentLineLength =
-            tasks.register("checkCommentLineLength", CommentLineLengthCheck::class.java)
-        tasks.named("check").configure { dependsOn(checkCommentLineLength) }
     }
 }

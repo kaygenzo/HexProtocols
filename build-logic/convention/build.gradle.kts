@@ -20,5 +20,9 @@ gradlePlugin {
             id = "hexprotocols.android.library"
             implementationClass = "hexprotocols.AndroidLibraryConventionPlugin"
         }
+        register("commentLengthConvention") {
+            id = "hexprotocols.comment-length"
+            implementationClass = "hexprotocols.CommentLengthConventionPlugin"
+        }
     }
 }
