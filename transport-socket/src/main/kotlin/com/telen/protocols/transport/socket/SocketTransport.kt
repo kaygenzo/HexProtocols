@@ -28,10 +28,10 @@ private const val BROADCAST_ADDRESS = "255.255.255.255"
 private const val RECEIVE_BUFFER_SIZE = 2048
 
 /**
- * TCP/UDP [Transport]. Every command opens (and closes) its own socket, matching how the LED
- * ribbon protocol actually behaves (short-lived TCP connections, connectionless UDP) — there is no
- * persistent link to hold, so [connect]/[disconnect] only track [connectionState] for API
- * consistency with transports that do have one (e.g. BLE).
+ * TCP/UDP [Transport]. Every command opens (and closes) its own socket, matching how many
+ * lightweight socket-based devices actually behave (short-lived TCP connections, connectionless
+ * UDP) — there is no persistent link to hold, so [connect]/[disconnect] only track
+ * [connectionState] for API consistency with transports that do have one (e.g. BLE).
  *
  * A response is read opportunistically right after writing, within [send] itself, using
  * [readTimeoutMillis] as the socket's read timeout, and published to a shared flow that [observe]

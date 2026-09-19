@@ -24,7 +24,7 @@ private val CLIENT_CHARACTERISTIC_CONFIG_UUID = UUID.fromString(
  * 33 in favor of a value-carrying overload) since `minSdk` here is 24 — this is the same tradeoff
  * every BLE library still supporting older devices makes. Not unit-testable (these are Android
  * framework classes with no real behavior outside a device); needs manual/instrumented
- * verification against a real peripheral (e.g. the Minger P50) before shipping.
+ * verification against a real peripheral before shipping.
  *
  * `BLUETOOTH_CONNECT`/`BLUETOOTH_SCAN` (API 31+) are runtime permissions: granting them is the
  * consuming app's responsibility (declared in this module's manifest, requested at runtime by the

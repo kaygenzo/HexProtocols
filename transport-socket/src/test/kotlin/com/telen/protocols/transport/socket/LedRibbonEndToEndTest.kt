@@ -18,12 +18,80 @@ import org.junit.jupiter.api.Test
 private const val SERVER_TIMEOUT_MILLIS = 3_000
 
 /**
- * Drives the real `led_ribbon.json` fixture end to end through [ProtocolConfigParser] +
- * [ProtocolEngine] + [SocketTransport] — the Phase 3 milestone: no mocks, no hardware, loopback
- * TCP/UDP servers standing in for the LED ribbon. Server-side threads are daemons with their own
- * socket read timeout, so a test never hangs the JVM if something doesn't arrive; their assertions
- * are captured into a var and checked on the test thread after `join()`, since a failure raised on
- * a bare background thread would otherwise never fail the test.
+ * A synthetic device protocol modeled on a real cheap Wi-Fi LED controller's wire format (a
+ * fixed-offset TCP command frame with a client-computed checksum, plus AT-command-style UDP
+ * broadcast discovery/provisioning) — not the config any real app ships, which is deliberately not
+ * this library's concern: config files are the calling app's job (see `sample-app`'s assets).
+ */
+private val syntheticLedProtocolJson =
+    """
+    {
+      "deviceNames": ["SYNTH-LED"],
+      "commands": [
+        {
+          "identifier": "LIGHT_ON",
+          "request": {
+            "route": { "type": "tcp", "port": 5577 },
+            "length": 4,
+            "payloads": [
+              { "name": "SUBROUTINE", "start": 0, "end": 0, "type": "HEX", "value": "0x71" },
+              { "name": "COMMAND", "start": 1, "end": 1, "type": "HEX", "value": "0x23" },
+              { "name": "OPTION", "start": 2, "end": 2, "type": "HEX", "value": "0x0F" },
+              { "name": "CHECKSUM", "start": 3, "end": 3, "type": "INTEGER", "min": 0, "max": 255 }
+            ]
+          },
+          "response": { "route": { "type": "tcp", "port": 5577 } }
+        },
+        {
+          "identifier": "CHANGE_COLOR",
+          "request": {
+            "route": { "type": "tcp", "port": 5577 },
+            "length": 8,
+            "payloads": [
+              { "name": "SUBROUTINE", "start": 0, "end": 0, "type": "HEX", "value": "0x31" },
+              { "name": "RED", "start": 1, "end": 1, "type": "INTEGER", "min": 0, "max": 255 },
+              { "name": "GREEN", "start": 2, "end": 2, "type": "INTEGER", "min": 0, "max": 255 },
+              { "name": "BLUE", "start": 3, "end": 3, "type": "INTEGER", "min": 0, "max": 255 },
+              { "name": "UNKNOWN_1", "start": 4, "end": 4, "type": "INTEGER", "value": 0 },
+              { "name": "UNKNOWN_2", "start": 5, "end": 5, "type": "INTEGER", "value": 0 },
+              { "name": "OPTION", "start": 6, "end": 6, "type": "HEX", "value": "0x0F" },
+              { "name": "CHECKSUM", "start": 7, "end": 7, "type": "INTEGER", "min": 0, "max": 255 }
+            ]
+          }
+        },
+        {
+          "identifier": "GET_REMOTE_ADDRESS",
+          "request": {
+            "route": { "type": "udp", "port": 48899, "isBroadcast": true },
+            "layout": "TEXT",
+            "payloads": [ { "name": "MESSAGE", "type": "ASCII", "value": "DISCOVER" } ]
+          },
+          "response": { "route": { "type": "udp", "port": 48899 } }
+        },
+        {
+          "identifier": "SEND_SSID",
+          "request": {
+            "route": { "type": "udp", "port": 48899 },
+            "layout": "TEXT",
+            "payloads": [
+              { "name": "MESSAGE", "type": "ASCII", "value": "AT+WSSSID=" },
+              { "name": "SSID", "type": "ASCII" },
+              { "name": "END", "type": "ASCII", "value": "\r" }
+            ]
+          },
+          "response": { "route": { "type": "udp", "port": 48899 } }
+        }
+      ]
+    }
+    """.trimIndent()
+
+/**
+ * Drives the synthetic LED-controller-style protocol above end to end through
+ * [ProtocolConfigParser] + [ProtocolEngine] + [SocketTransport] — the Phase 3 milestone: no mocks,
+ * no hardware, loopback TCP/UDP servers standing in for the device. Server-side threads are
+ * daemons with their own socket read timeout, so a test never hangs the JVM if something doesn't
+ * arrive; their assertions are captured into a var and checked on the test thread after `join()`,
+ * since a failure raised on a bare background thread would otherwise never fail the test.
  */
 class LedRibbonEndToEndTest {
     private val json =
@@ -35,7 +103,7 @@ class LedRibbonEndToEndTest {
     private val protocol =
         ProtocolConfigParser(json).parse(
             ProtocolSource {
-                requireNotNull(javaClass.classLoader).getResourceAsStream("led_ribbon.json")!!
+                syntheticLedProtocolJson.byteInputStream()
             }
         )
 
@@ -149,7 +217,7 @@ class LedRibbonEndToEndTest {
 
             discoveryThread.join(SERVER_TIMEOUT_MILLIS.toLong())
             discovery.close()
-            assertEquals("HF-A11ASSISTHREAD", discoveryReceived)
+            assertEquals("DISCOVER", discoveryReceived)
             assertEquals("127.0.0.1", discoveredAddress)
 
             val provisioning = DatagramSocket(0)
@@ -171,7 +239,8 @@ class LedRibbonEndToEndTest {
                     sendSsid,
                     values = mapOf("SSID" to "MyWifi"),
                     routeOverride = provisioningRoute
-                ).toList()
+                )
+                .toList()
 
             provisioningThread.join(SERVER_TIMEOUT_MILLIS.toLong())
             provisioning.close()

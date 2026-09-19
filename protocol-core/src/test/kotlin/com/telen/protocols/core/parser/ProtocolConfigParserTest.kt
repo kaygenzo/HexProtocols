@@ -89,37 +89,71 @@ class ProtocolConfigParserTest {
     }
 
     @Test
-    fun `parses the real led_ribbon fixture`() {
+    fun `parses a UDP route with the broadcast flag`() {
         val source =
             ProtocolSource {
-                requireNotNull(javaClass.classLoader!!.getResourceAsStream("led_ribbon.json"))
+                """
+                {
+                  "deviceNames": ["SYNTH-UDP"],
+                  "commands": [
+                    {
+                      "identifier": "DISCOVER",
+                      "request": {
+                        "route": { "type": "udp", "port": 48899, "isBroadcast": true },
+                        "layout": "TEXT",
+                        "payloads": [ { "name": "MESSAGE", "type": "ASCII", "value": "PING" } ]
+                      },
+                      "response": { "route": { "type": "udp", "port": 48899 } }
+                    }
+                  ]
+                }
+                """.trimIndent().byteInputStream()
             }
+
         val protocol = parser.parse(source)
 
-        assertEquals(listOf("LED"), protocol.deviceNames)
-
-        val lightOn = assertNotNull(protocol.command("LIGHT_ON"))
-        assertEquals(TestSocketRoute(port = 5577), lightOn.request?.route)
-
-        val getRemoteAddress = assertNotNull(protocol.command("GET_REMOTE_ADDRESS"))
-        val route = assertNotNull(getRemoteAddress.request?.route as? TestUdpRoute)
+        val command = assertNotNull(protocol.command("DISCOVER"))
+        val route = assertNotNull(command.request?.route as? TestUdpRoute)
         assertEquals(48899, route.port)
         assertEquals(true, route.isBroadcast)
     }
 
     @Test
-    fun `parses the real minger fixture`() {
+    fun `parses a BLE route with a fixed-offset payload schema`() {
         val source =
             ProtocolSource {
-                requireNotNull(javaClass.classLoader!!.getResourceAsStream("minger.json"))
+                """
+                {
+                  "deviceNames": ["SYNTH-BLE"],
+                  "commands": [
+                    {
+                      "identifier": "CHANGE_COLOR",
+                      "request": {
+                        "route": {
+                          "type": "ble",
+                          "service": "0000aaaa-0000-1000-8000-00805f9b34fb",
+                          "characteristic": "0000bbbb-0000-1000-8000-00805f9b34fb"
+                        },
+                        "length": 4,
+                        "payloads": [
+                          { "name": "RED", "start": 0, "end": 0, "type": "INTEGER" },
+                          { "name": "GREEN", "start": 1, "end": 1, "type": "INTEGER" },
+                          { "name": "BLUE", "start": 2, "end": 2, "type": "INTEGER" },
+                          { "name": "SUFFIX", "start": 3, "end": 3, "type": "HEX", "value": "0x00" }
+                        ]
+                      }
+                    }
+                  ]
+                }
+                """.trimIndent().byteInputStream()
             }
+
         val protocol = parser.parse(source)
 
-        assertEquals(listOf("minger-P50"), protocol.deviceNames)
-        val changeColor = assertNotNull(protocol.command("CHANGE_COLOR"))
-        val route = assertNotNull(changeColor.request?.route as? TestBleRoute)
-        assertEquals("00007777-0000-1000-8000-00805f9b34fb", route.service)
-        assertEquals(20, changeColor.request?.length)
-        assertEquals(8, changeColor.request?.payloads?.size)
+        val command = assertNotNull(protocol.command("CHANGE_COLOR"))
+        val route = assertNotNull(command.request?.route as? TestBleRoute)
+        assertEquals("0000aaaa-0000-1000-8000-00805f9b34fb", route.service)
+        assertEquals(4, command.request?.length)
+        assertEquals(4, command.request?.payloads?.size)
     }
 }
