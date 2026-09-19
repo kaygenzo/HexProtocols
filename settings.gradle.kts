@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 rootProject.name = "HexProtocols"
 
 include(":protocol-core")
+include(":transport-socket")
