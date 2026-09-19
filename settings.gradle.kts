@@ -19,3 +19,4 @@ rootProject.name = "HexProtocols"
 
 include(":protocol-core")
 include(":transport-socket")
+include(":transport-ble")
